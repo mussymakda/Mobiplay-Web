@@ -1,0 +1,443 @@
+@media (max-width: 1620px){
+  .campaign-table table.table tr td{
+    font-size: 15px;
+  }
+  .campaign-table table.table tr td span{
+    font-size: 13px;
+  }
+}
+@media (min-width: 992px) {
+  #wrapper {
+    padding-left: 264px;
+  }
+  
+  #wrapper.toggled {
+    padding-left: 80px;
+  }
+
+  #sidebar-wrapper {
+    width: 264px;
+  }
+  
+  #wrapper.toggled #sidebar-wrapper {
+    width: 80px;
+  }
+  
+  #wrapper.toggled #navbar-wrapper {
+    position: absolute;
+    margin-right: -190px;
+}
+  
+  #wrapper.toggled #content-wrapper {
+    position: absolute;
+    margin-right: -190px;
+  }
+
+  #navbar-wrapper {
+    position: relative;
+  }
+
+  #wrapper.toggled {
+    padding-left: 80px;
+  }
+
+  #content-wrapper {
+    position: relative;
+    top: 0;
+  }
+
+  #wrapper.toggled #navbar-wrapper,
+  #wrapper.toggled #content-wrapper {
+    position: relative;
+    margin-right: 80px;
+  }
+
+  #wrapper.toggled #sidebar-wrapper .sidebar-nav > li a span{
+    display: none;
+  }
+  #wrapper.toggled #sidebar-wrapper .sidebar-nav > li a{
+    display: inline-block;
+  }
+  #wrapper.toggled #sidebar-wrapper .help-link span{
+    display: none;
+  }
+  #wrapper.toggled .sidebar-brand{
+    width: auto;
+  }
+  #wrapper.toggled .sidebar-brand a.desk-logo{
+    display: none;
+  }
+
+  #wrapper.toggled .sidebar-brand a.mobile-logo{
+    display: block;
+  }
+  #wrapper.toggled .sidebar-brand a.mobile-logo img{
+    width: 80px;
+  }
+
+}
+@media screen and (max-width: 991.98px) {
+	.logo-auth-desk{
+		display: none;
+	}
+	.auth-form{
+		padding: 20px;
+	}
+  #navbar-wrapper.campaginstep-header .navbar .step-logo{
+    position: initial;
+  }
+}
+@media (min-width: 768px) and (max-width: 991px) {
+  #wrapper {
+    padding-left: 60px;
+  }
+
+  #sidebar-wrapper {
+    width: 60px;
+  }
+  
+#wrapper.toggled #protected $routeMiddleware = [
+    // other route-specific middleware
+    'redirect_if_authenticated' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+];
+wrapper {
+    position: absolute;
+    margin-right: -250px;
+}
+  
+  #wrapper.toggled #content-wrapper {
+    position: absolute;
+    margin-right: -250px;
+  }
+
+  #navbar-wrapper {
+    position: relative;
+  }
+
+  #wrapper.toggled {
+    padding-left: 250px;
+  }
+
+  #content-wrapper {
+    position: relative;
+    top: 0;
+  }
+
+  #wrapper.toggled #navbar-wrapper,
+  #wrapper.toggled #content-wrapper {
+    position: relative;
+    margin-right: 250px;
+  }
+}
+@media screen and (max-width: 767.98px) {
+	.auth-form h2{
+		font-size: 24px;
+		margin-bottom: 10px;
+	}
+	.auth-form{
+		padding: 20px 20px 30px;
+		min-height: calc(100vh - 107px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+	}
+	.auth-form.auth-with-height{
+		min-height: calc(100vh - 107px);
+	}
+	.auth-footer{
+		position: initial;
+	}
+	a.profile-auth{
+		position: initial;
+		padding: 10px 10px;
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+	}
+	.form-radio-grp .form-check{
+		padding: 30px 0px 30px 50px;
+		border-bottom: 1px solid #cbcbcb;
+	}
+	#wrapper {
+    	padding-left: 0;
+  	}
+
+  #sidebar-wrapper {
+    width: 0;
+    margin-right: -264px;
+    left: auto;
+    right: 0;
+    height: 100vh;
+  }
+
+  #wrapper.toggled #sidebar-wrapper {
+    width: 250px;
+    position: absolute;
+    left: auto;
+    right: 264px;
+  }
+  #wrapper.toggled #navbar-wrapper {
+    position: absolute;
+    margin-right: -250px;
+  }
+
+  #wrapper.toggled #content-wrapper {
+    position: absolute;
+    margin-right: -250px;
+  }
+
+  #navbar-wrapper {
+    position: relative;
+  }
+
+  #wrapper.toggled {
+    padding-left: 0px;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+
+  #content-wrapper {
+    position: relative;
+    top: 0;
+    padding: 0;
+  }
+
+  #wrapper.toggled #navbar-wrapper,
+  #wrapper.toggled #content-wrapper {
+    position: relative;
+    margin-right: 0px;
+  }
+  a.notification-link img {
+    width: 40px;
+  }
+  #navbar-wrapper .navbar-header .right-nav .profile-name{
+    border: 0;
+  }
+  #navbar-wrapper .navbar-header .right-nav .profile-name span{
+    display: none;
+  }
+  .navbar-header .right-nav .lang-menu{
+    padding: 6px 5px;
+  }
+  .navbar-header{
+    align-items: center;
+  }
+  .page-title h1{
+    font-size: 24px;
+  }
+  .create-campaign-box{
+    flex-direction: column-reverse;
+  }
+  .create-campaign-box .campaign-details{
+    margin-bottom: 15px;
+  }
+  .du-time {
+    padding: 15px 15px;
+    border-bottom: 1px solid #ddd;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    border-right: 0;
+  }
+  .add-schedule-box{
+    flex-direction: column;
+    align-items: flex-start;
+    border-bottom: 1px solid #ddd;
+        padding: 15px 0;
+  }
+  .add-schedule-box .add-schedule-select {
+    flex: none;
+    padding: 10px;
+    width: 100%;
+  }
+  .add-schedule-box .add-time{
+    flex: none;
+    width: 100%;
+    flex-direction: column;
+  }
+  .add-schedule-box .add-time .form-group{
+    margin: 10px 0px;
+    width: 100%;
+  }
+  .duration-body{
+    padding: 0;
+  }
+  .ad-close {
+    padding: 10px;
+    flex-shrink: 1;
+    width: 100%;
+  }
+  .duration-header h4{
+    flex: none;
+  }
+  .camp-grp-btn a{
+    margin: 5px;
+  }
+  .step-line{
+    position: relative;
+  }
+  .step-line .step-close {
+        position: absolute;
+        right: 0;
+        top: 0;
+        margin: 4px 5px 0;
+    }
+  .summary-details .summary-d .summary-inside{
+    flex-direction: column;
+  }
+  .summary-details .summary-d .more-box .day-details{
+    flex-direction: column;
+  }
+  .summary-box{
+    padding: 15px;
+    margin-bottom: 30px;
+    height: auto;
+  }
+  .payment-select .form-select{
+    height: 48px;
+    font-size: 16px;
+  }
+  .payment-select span.form-select-icon{
+    top: 11px;
+  }
+  .payment-details{
+    padding: 15px;
+  }
+  .payment-details .form-group label{
+    font-size: 14px;
+  }
+  #navbar-wrapper.campaginstep-header .navbar .step-logo{
+    position: initial;
+  }
+  #navbar-wrapper.campaginstep-header .navbar .step-logo img {
+    height: 42px;
+  }
+  #navbar-wrapper .navbar-header .right-nav .profile-name img{
+    margin-left: 0;
+  }
+  #navbar-wrapper.campaginstep-header .navbar-header .right-nav .profile-name{
+    width: 40px;
+    height: 40px;
+    border: 0;
+    background: transparent;
+  }
+  .figure-list{
+    padding-top: 30px;
+  }
+  .figure-list ul:before{
+    width: 90%;
+  }
+  .campe-box{
+    height: auto;
+  }
+  .creative-box{
+    margin-bottom: 30px;
+  }
+  .loacat-section {
+    padding: 0 15px;
+  }
+  .spend-box{
+    height: auto;
+    margin-bottom: 30px;
+  }
+  .choose-campgain h2{
+    font-size: 24px;
+    line-height: 30px;
+  }
+  .choose-campgain p{
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .daily-budget-box{
+    flex-direction: column;
+    padding: 10px 20px;
+  }
+  .daily-budget-box p{
+    margin-left: 0;
+    margin-top: 10px;
+    text-align: center;
+  }
+  .daily-budget-box h3{
+    margin-right: 0;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .campgain-tab.analytics-tab{
+    margin-left: 0;
+  }
+  .campgain-tab.analytics-tab nav .nav-link span{
+    display: none;
+  }
+  .navbar-brand{
+    margin-right: 7px;
+  }
+  .campgain-tab.analytics-tab nav .nav-link{
+    padding: 4px;
+  }
+  .campgain-tab{
+    margin-bottom: 15px;
+  }
+  .mobiplay-profile{
+    align-items: flex-start;
+  }
+  .mobiplay-profile .mobiplay-left{
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .mobiplay-profile .mobiplay-left .profile-name{
+    padding-left: 0;
+    padding-top: 10px;
+  }
+  .profile-drop-link{
+    display: block;
+    position: absolute;
+    right: 15px;
+    top:10px;
+  }
+  .profile-link {
+    display: none;
+    position: absolute;
+    background: #fff;
+    padding: 15px;
+    z-index: 99;
+    left: 15px;
+    right: 15px;
+    top: 40px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.17);
+  }
+  .profile-link.show{
+    display: block;
+  }
+  .empty-payment-box{
+    height: 152px;
+  }
+  .personal-info.history-table{
+    overflow: hidden;
+  }
+  .page-title a.back-c{
+    position: absolute;
+  }
+  .page-title a.back-c {
+        position: absolute;
+        top: 5px;
+  }
+  .page-title a img {
+    width: 36px;
+    object-fit: cover;
+    object-position: center;
+    height: 36px;
+    transform: scale(1.6);
+}
+  .page-title h1.profile-title{
+    padding-left: 50px;
+  }
+  .setting-box{
+    padding: 10px 0;
+  }
+  .personal-info h4{
+    padding-left: 15px;
+  } 
+
+}
