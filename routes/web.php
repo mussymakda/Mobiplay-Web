@@ -73,7 +73,13 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Dashboard Route
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $offers = \App\Models\Offer::where('is_active', true)
+        ->where('valid_from', '<=', now())
+        ->where('valid_until', '>=', now())
+        ->orderBy('created_at', 'desc')
+        ->get();
+    
+    return view('dashboard', compact('offers'));
 })->middleware('auth')->name('dashboard');
 
 // Route::get('/campaign-wizard', function () {
@@ -125,6 +131,9 @@ Route::post('stripe/test-webhook', function (Request $request) {
 Route::get('/payment/success', [PaymentController::class, 'handlePaymentSuccess'])
     ->name('payment.success');
 
+Route::get('/payment/success-page', [PaymentController::class, 'showPaymentSuccessPage'])
+    ->name('payment.success.page');
+
 Route::post('stripe/webhook', [PaymentController::class, 'handleStripeWebhook'])
     ->name('stripe.webhook')
     ->middleware('api');
@@ -142,6 +151,7 @@ Route::middleware(['auth'])->group(function () {
     // Edit Profile Routes
     Route::get('/edit-profile', [EditProfileController::class, 'show'])->name('profile.edit');
     Route::post('/edit-profile', [EditProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/upload-photo', [EditProfileController::class, 'uploadPhoto'])->name('profile.upload-photo');
 
 });
 Route::get('/payments', [PaymentController::class, 'index'])->middleware('auth');

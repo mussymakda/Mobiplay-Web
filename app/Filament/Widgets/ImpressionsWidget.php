@@ -184,23 +184,6 @@ class ImpressionsWidget extends ChartWidget
                 break;
         }
         
-        // If no data, provide sample data to show chart functionality
-        if (array_sum($values) == 0) {
-            $sampleLabels = [];
-            $sampleValues = [];
-            
-            for ($i = 6; $i >= 0; $i--) {
-                $date = Carbon::now()->subDays($i);
-                $sampleLabels[] = $date->format('M d');
-                $sampleValues[] = rand(100, 1000);
-            }
-            
-            return [
-                'labels' => $sampleLabels,
-                'values' => $sampleValues,
-            ];
-        }
-        
         return [
             'labels' => $labels,
             'values' => $values,

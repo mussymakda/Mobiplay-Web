@@ -35,8 +35,9 @@ return [
         ],
     ],
     'stripe' => [
-    'secret' => env('STRIPE_SECRET'),
-    'key' => env('STRIPE_KEY'),
-    'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'secret' => env('STRIPE_SECRET'),
+        'key' => env('STRIPE_KEY'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'metered_price_id' => env('STRIPE_METERED_PRICE_ID'),
     ],
 ];

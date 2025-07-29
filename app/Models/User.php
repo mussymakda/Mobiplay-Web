@@ -24,10 +24,19 @@ class User extends Authenticatable
         'password',
         'email_verified_at',
         'stripe_customer_id',
+        'metered_subscription_id',
         'balance',
         'bonus_balance',
         'auto_debit_enabled',
         'auto_debit_threshold',
+        'phone_number',
+        'address_line1',
+        'address_line2',
+        'city',
+        'state_province',
+        'postal_code',
+        'country',
+        'profile_image',
     ];
 
     /**
@@ -81,6 +90,21 @@ class User extends Authenticatable
 
     public function addBalance($amount, $type = 'deposit', $description = null)
     {
+        // Validate that the type is a valid enum value
+        $validTypes = [
+            Payment::TYPE_DEPOSIT,
+            Payment::TYPE_AUTO_DEBIT,
+            Payment::TYPE_BONUS,
+            Payment::TYPE_AD_SPEND,
+            Payment::TYPE_REFUND,
+        ];
+        
+        if (!in_array($type, $validTypes)) {
+            // If invalid type, use it as description and default to refund type
+            $description = $description ?? $type;
+            $type = Payment::TYPE_REFUND;
+        }
+        
         $this->increment('balance', $amount);
         
         // Create payment record
@@ -89,6 +113,7 @@ class User extends Authenticatable
             'type' => $type,
             'status' => Payment::STATUS_COMPLETED,
             'description' => $description ?? "Balance added: $amount",
+            'transaction_id' => 'manual_' . uniqid(),
         ]);
     }
 
@@ -154,6 +179,14 @@ class User extends Authenticatable
     public function getTotalSpentAttribute()
     {
         return $this->ads()->sum('spent');
+    }
+
+    public function getProfileImageUrlAttribute()
+    {
+        if ($this->profile_image) {
+            return asset('storage/' . $this->profile_image);
+        }
+        return asset('assets/images/demo-profile.svg');
     }
 
 }

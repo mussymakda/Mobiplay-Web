@@ -29,28 +29,54 @@
           </div>
         </div>
       </div>
-      <div class="col-lg-12">
-        <div class="create-campaign-box offer-box">
-          <div class="campaign-img">
-            <img class="img-fluid" src="assets/images/add_money.svg">
-          </div>
-          <div class="campaign-details">
-            <h2>{{ __('messages.add_balance') }}</h2>
-            <p>{{ __('messages.limited_time_offer') }}</p>
-            <form action="{{ route('payment.make') }}" method="GET">
-              <button type="submit" class="btn btn-primary">{{ __('messages.add_balance_btn') }}</button>
-            </form>
+      
+      @if($offers->count() > 0)
+        @foreach($offers as $offer)
+        <div class="col-lg-12">
+          <div class="create-campaign-box offer-box">
+            <div class="campaign-img">
+              <img class="img-fluid" src="assets/images/add_money.svg">
+            </div>
+            <div class="campaign-details">
+              <h2>{{ $offer->name }}</h2>
+              <p>{{ $offer->description }}</p>
+              <form action="{{ route('payment.make') }}" method="GET">
+                <input type="hidden" name="offer_id" value="{{ $offer->id }}">
+                <button type="submit" class="btn btn-primary">{{ __('messages.add_balance_btn') }}</button>
+              </form>
+            </div>
           </div>
         </div>
-      </div>
+        @endforeach
+      @else
+        <div class="col-lg-12">
+          <div class="create-campaign-box offer-box">
+            <div class="campaign-img">
+              <img class="img-fluid" src="assets/images/add_money.svg">
+            </div>
+            <div class="campaign-details">
+              <h2>{{ __('messages.add_balance') }}</h2>
+              <p>{{ __('messages.no_offers_available') }}</p>
+              <form action="{{ route('payment.make') }}" method="GET">
+                <button type="submit" class="btn btn-primary">{{ __('messages.add_balance_btn') }}</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      @endif
 
       <div class="row">
           <div class="col-lg-4">
               <div class="total-box">
                   <div class="total-header">
                       <div class="total-left">
-                          <h2 id="stripe-balance">${{ Auth::user()->credit_balance }}</h2>
+                          <h2 id="stripe-balance">${{ Auth::user()->total_balance }}</h2>
                           <span>{{ __('messages.total_balance') }}</span>
+                          @if(Auth::user()->bonus_balance > 0)
+                          <small style="color: #28a745; font-size: 12px; display: block; margin-top: 5px;">
+                              <i class="fas fa-gift"></i> Bonus: ${{ number_format(Auth::user()->bonus_balance, 2) }}
+                          </small>
+                          @endif
                       </div>
                       <div class="total-right">
                           <img src="assets/images/money-bag.png" style="height: 40px; width: 40px;" alt="Ícono de Saldo Total">

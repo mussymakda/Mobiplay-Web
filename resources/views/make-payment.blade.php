@@ -93,6 +93,32 @@
                                     @csrf
                                     <div class="payment-details">
                                         <div class="row gx-3">
+                                            @if($offers->count() > 0)
+                                            <div class="col-lg-12">
+                                                <div class="form-group mb-3">
+                                                    <label>Select Offer (Optional)</label>
+                                                    <select id="offer-select" name="offer_id" class="form-control" onchange="updateSummary()">
+                                                        <option value="">No offer selected</option>
+                                                        @foreach($offers as $offer)
+                                                        <option value="{{ $offer->id }}" 
+                                                            data-type="{{ $offer->type }}"
+                                                            data-percentage="{{ $offer->bonus_percentage }}"
+                                                            data-fixed="{{ $offer->bonus_fixed_amount }}"
+                                                            data-min="{{ $offer->minimum_deposit }}"
+                                                            data-max="{{ $offer->maximum_bonus }}"
+                                                            {{ $selectedOffer && $selectedOffer->id == $offer->id ? 'selected' : '' }}>
+                                                            {{ $offer->name }} 
+                                                            @if($offer->bonus_percentage)
+                                                                ({{ $offer->bonus_percentage }}% bonus)
+                                                            @elseif($offer->bonus_fixed_amount)
+                                                                (${{ number_format($offer->bonus_fixed_amount, 2) }} bonus)
+                                                            @endif
+                                                        </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            @endif
                                             <div class="col-lg-12">
                                                 <div class="form-group mb-3">
                                                     <label>Enter Amount<sup>*</sup></label>
@@ -129,15 +155,58 @@
     function updateSummary() {
         const amount = parseFloat(document.getElementById('amount').value) || 0;
         const tax = amount * 0.16;
+        let bonus = 0;
+        
+        // Get selected offer
+        const offerSelect = document.getElementById('offer-select');
+        if (offerSelect && offerSelect.value) {
+            const selectedOption = offerSelect.options[offerSelect.selectedIndex];
+            const offerType = selectedOption.getAttribute('data-type');
+            const bonusPercentage = parseFloat(selectedOption.getAttribute('data-percentage')) || 0;
+            const bonusFixed = parseFloat(selectedOption.getAttribute('data-fixed')) || 0;
+            const minDeposit = parseFloat(selectedOption.getAttribute('data-min')) || 0;
+            const maxBonus = parseFloat(selectedOption.getAttribute('data-max')) || 0;
+            
+            // Calculate bonus if amount meets minimum
+            if (amount >= minDeposit) {
+                if (offerType === 'percentage_bonus' || offerType === 'first_deposit' || offerType === 'reload_bonus') {
+                    bonus = amount * (bonusPercentage / 100);
+                    // Apply maximum bonus limit if set
+                    if (maxBonus > 0 && bonus > maxBonus) {
+                        bonus = maxBonus;
+                    }
+                } else if (offerType === 'fixed_bonus') {
+                    bonus = bonusFixed;
+                }
+            }
+        }
+        
         const total = amount + tax;
 
         document.getElementById('summary-amount').textContent = `$${amount.toFixed(2)}`;
         document.getElementById('summary-tax').textContent = `$${tax.toFixed(2)}`;
+        document.getElementById('summary-bonus').textContent = `$${bonus.toFixed(2)}`;
         document.getElementById('summary-total').textContent = `$${total.toFixed(2)}`;
     }
 
+    // Initialize the form when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSummary();
+    });
+
 document.getElementById('checkout-button').addEventListener('click', function () {
-    const amount = parseFloat(document.getElementById('amount').value) ; // Convert to cents
+    const amount = parseFloat(document.getElementById('amount').value);
+    
+    // Get the selected offer ID
+    const offerSelect = document.getElementById('offer-select');
+    const offerId = offerSelect ? offerSelect.value : null;
+    
+    console.log('Sending payment request:', { amount, offer_id: offerId });
+
+    const requestData = { amount };
+    if (offerId) {
+        requestData.offer_id = offerId;
+    }
 
     fetch('/create-metered-payment', {
         method: 'POST',
@@ -145,11 +214,12 @@ document.getElementById('checkout-button').addEventListener('click', function ()
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
         },
-        body: JSON.stringify({ amount })
+        body: JSON.stringify(requestData)
     })
     .then(response => response.json())
     .then(data => {
         if (data.sessionId) {
+            console.log('Received session ID:', data.sessionId);
             // Initialize Stripe with your public key
             const stripe = Stripe("{{ env('STRIPE_KEY') }}"); // Replace with your public key
             // Redirect to Stripe Checkout using the sessionId
@@ -165,7 +235,10 @@ document.getElementById('checkout-button').addEventListener('click', function ()
             alert('Error: ' + (data.error || 'Unknown error'));
         }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Payment error: ' + error.message);
+    });
 });
 
 </script>

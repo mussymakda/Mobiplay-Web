@@ -137,4 +137,5 @@ return [
     'change_password' => 'Change Password',
     'faqs' => 'FAQ\'s',
     'close_account' => 'Close my Account',
+    'no_offers_available' => 'No special offers available at the moment. Check back later for exciting deals!'
 ];

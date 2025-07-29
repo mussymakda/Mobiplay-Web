@@ -135,4 +135,5 @@ proporcionan sin costo adicional.',
     'change_password' => 'Cambiar Contraseña',
     'faqs' => 'Preguntas Frecuentes',
     'close_account' => 'Cerrar mi Cuenta',
+    'no_offers_available' => 'No hay ofertas especiales disponibles en este momento. ¡Vuelve más tarde para ofertas emocionantes!'
 ];

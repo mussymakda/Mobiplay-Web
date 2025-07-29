@@ -23,7 +23,8 @@ class ProfileController extends Controller
             'state_province' => $user->state_province ?? '-',
             'postal_code' => $user->postal_code ?? '-',
             'country' => $user->country ?? '-',
-            'account_type' => $user->account_type ?? '-',
+            'account_type' => $user->type ?? '-',
+            'profile_image_url' => $user->profile_image ? asset('storage/' . $user->profile_image) : asset('assets/images/demo-profile.svg'),
         ]);
     }
 }

@@ -266,36 +266,122 @@ class PaymentResource extends Resource
                                 ->label('Refund Reason')
                                 ->required()
                                 ->placeholder('Reason for refund...'),
+                            Forms\Components\Toggle::make('process_stripe_refund')
+                                ->label('Process Stripe Refund')
+                                ->default(true)
+                                ->helperText('If enabled, will also process refund through Stripe'),
                         ])
                         ->action(function (Payment $record, array $data) {
                             $user = $record->user;
+                            $refundAmount = $data['refund_amount'];
+                            $refundReason = $data['refund_reason'];
+                            $processStripeRefund = $data['process_stripe_refund'] ?? false;
                             
-                            // Create refund payment
-                            $refund = $user->payments()->create([
-                                'amount' => $data['refund_amount'],
-                                'type' => Payment::TYPE_REFUND,
-                                'status' => Payment::STATUS_COMPLETED,
-                                'transaction_id' => 'refund_' . uniqid(),
-                                'description' => 'Refund: ' . $data['refund_reason'],
-                                'metadata' => [
-                                    'original_payment_id' => $record->id,
-                                    'refund_reason' => $data['refund_reason'],
-                                    'admin_initiated' => true,
-                                ],
-                            ]);
+                            \Illuminate\Support\Facades\DB::beginTransaction();
                             
-                            // Add refund amount to user balance
-                            $user->addBalance($data['refund_amount'], 'Refund: ' . $data['refund_reason']);
-                            
-                            \Filament\Notifications\Notification::make()
-                                ->title('Refund processed successfully')
-                                ->body("Refunded ${$data['refund_amount']} to {$user->name}")
-                                ->success()
-                                ->send();
+                            try {
+                                $stripeRefundId = null;
+                                
+                                // Process Stripe refund if requested and payment has Stripe ID
+                                if ($processStripeRefund && $record->stripe_payment_id) {
+                                    try {
+                                        // Initialize Stripe
+                                        $stripeSecret = config('services.stripe.secret') ?: env('STRIPE_SECRET');
+                                        if (empty($stripeSecret)) {
+                                            throw new \Exception('Stripe API key not configured');
+                                        }
+                                        \Stripe\Stripe::setApiKey($stripeSecret);
+                                        
+                                        // Create Stripe refund
+                                        $stripeRefund = \Stripe\Refund::create([
+                                            'payment_intent' => $record->stripe_payment_id,
+                                            'amount' => intval($refundAmount * 100), // Convert to cents
+                                            'reason' => 'requested_by_customer',
+                                            'metadata' => [
+                                                'refund_reason' => $refundReason,
+                                                'admin_initiated' => 'true',
+                                                'original_payment_id' => $record->id,
+                                            ]
+                                        ]);
+                                        
+                                        $stripeRefundId = $stripeRefund->id;
+                                        
+                                        \Illuminate\Support\Facades\Log::info('Stripe refund processed', [
+                                            'stripe_refund_id' => $stripeRefundId,
+                                            'amount' => $refundAmount,
+                                            'original_payment_id' => $record->id
+                                        ]);
+                                        
+                                    } catch (\Exception $e) {
+                                        \Illuminate\Support\Facades\Log::error('Stripe refund failed', [
+                                            'error' => $e->getMessage(),
+                                            'payment_id' => $record->id,
+                                            'amount' => $refundAmount
+                                        ]);
+                                        
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Stripe refund failed')
+                                            ->body("Failed to process Stripe refund: " . $e->getMessage())
+                                            ->danger()
+                                            ->send();
+                                        
+                                        \Illuminate\Support\Facades\DB::rollBack();
+                                        return;
+                                    }
+                                }
+                                
+                                // Create refund payment record
+                                $refund = $user->payments()->create([
+                                    'amount' => $refundAmount,
+                                    'type' => Payment::TYPE_REFUND,
+                                    'status' => Payment::STATUS_COMPLETED,
+                                    'transaction_id' => $stripeRefundId ?: ('refund_' . uniqid()),
+                                    'description' => "Refund: {$refundReason}",
+                                    'stripe_payment_id' => $stripeRefundId,
+                                    'metadata' => [
+                                        'original_payment_id' => $record->id,
+                                        'refund_reason' => $refundReason,
+                                        'admin_initiated' => true,
+                                        'stripe_processed' => $processStripeRefund,
+                                        'stripe_refund_id' => $stripeRefundId,
+                                    ],
+                                ]);
+                                
+                                // Add refund amount to user balance
+                                $user->increment('balance', $refundAmount);
+                                
+                                \Illuminate\Support\Facades\DB::commit();
+                                
+                                $message = "Refunded \${$refundAmount} to {$user->name}";
+                                if ($stripeRefundId) {
+                                    $message .= " (Stripe Refund ID: {$stripeRefundId})";
+                                }
+                                
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Refund processed successfully')
+                                    ->body($message)
+                                    ->success()
+                                    ->send();
+                                    
+                            } catch (\Exception $e) {
+                                \Illuminate\Support\Facades\DB::rollBack();
+                                
+                                \Illuminate\Support\Facades\Log::error('Refund processing failed', [
+                                    'error' => $e->getMessage(),
+                                    'payment_id' => $record->id,
+                                    'amount' => $refundAmount
+                                ]);
+                                
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Refund processing failed')
+                                    ->body("Failed to process refund: " . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
                         })
                         ->requiresConfirmation()
                         ->modalHeading('Process Refund')
-                        ->modalDescription('This will create a refund payment and add the amount to the user\'s balance.')
+                        ->modalDescription('This will create a refund payment and optionally process the refund through Stripe.')
                         ->visible(fn (Payment $record): bool => 
                             in_array($record->status, [Payment::STATUS_COMPLETED]) && 
                             in_array($record->type, [Payment::TYPE_DEPOSIT, Payment::TYPE_AUTO_DEBIT])

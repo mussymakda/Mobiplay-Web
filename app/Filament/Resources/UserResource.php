@@ -72,6 +72,40 @@ class UserResource extends Resource
                             ->label('Stripe Customer ID')
                             ->maxLength(255)
                             ->placeholder('Stripe customer identifier'),
+                        Forms\Components\FileUpload::make('profile_image')
+                            ->label('Profile Image')
+                            ->image()
+                            ->directory('profile-images')
+                            ->disk('public')
+                            ->imageEditor()
+                            ->circleCropper()
+                            ->maxSize(2048),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Contact Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('phone_number')
+                            ->label('Phone Number')
+                            ->tel()
+                            ->placeholder('Enter phone number'),
+                        Forms\Components\TextInput::make('address_line1')
+                            ->label('Address Line 1')
+                            ->placeholder('Street address'),
+                        Forms\Components\TextInput::make('address_line2')
+                            ->label('Address Line 2')
+                            ->placeholder('Apartment, suite, etc.'),
+                        Forms\Components\TextInput::make('city')
+                            ->label('City')
+                            ->placeholder('Enter city'),
+                        Forms\Components\TextInput::make('state_province')
+                            ->label('State/Province')
+                            ->placeholder('Enter state or province'),
+                        Forms\Components\TextInput::make('postal_code')
+                            ->label('Postal Code')
+                            ->placeholder('Enter postal/zip code'),
+                        Forms\Components\TextInput::make('country')
+                            ->label('Country')
+                            ->placeholder('Enter country'),
                     ])->columns(2),
             ]);
     }

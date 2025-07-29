@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Models\User; // Assuming you're using the User model
 
 class EditProfileController extends Controller
@@ -42,15 +43,28 @@ class EditProfileController extends Controller
             'state_province' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
             'country' => 'nullable|string|max:255',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Profile image validation
         ]);
     
         // Get the authenticated user
         $user = Auth::user();
+
+        // Handle profile image upload
+        if ($request->hasFile('profile_image')) {
+            // Delete old profile image if it exists
+            if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
+                Storage::disk('public')->delete($user->profile_image);
+            }
+            
+            // Store new profile image
+            $imagePath = $request->file('profile_image')->store('profile-images', 'public');
+            $user->profile_image = $imagePath;
+        }
     
         // Update user information
         $user->name = $request->first_name . ' ' . $request->last_name; // Concatenate first and last names
         $user->email = $request->email;
-        $user->phone_number = $request->phone; // Update phone number
+        $user->phone_number = $request->phone_number; // Update phone number
         $user->address_line1 = $request->address_line1;
         $user->address_line2 = $request->address_line2;
         $user->city = $request->city;
@@ -63,6 +77,30 @@ class EditProfileController extends Controller
     
         // Redirect back with a success message
         return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
+    }
+
+    public function uploadPhoto(Request $request)
+    {
+        // Validate the uploaded file
+        $request->validate([
+            'profile_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Get the authenticated user
+        $user = Auth::user();
+
+        // Delete old profile image if it exists
+        if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
+            Storage::disk('public')->delete($user->profile_image);
+        }
+        
+        // Store new profile image
+        $imagePath = $request->file('profile_image')->store('profile-images', 'public');
+        $user->profile_image = $imagePath;
+        $user->save();
+
+        // Redirect back with a success message
+        return redirect()->route('profile')->with('success', 'Profile photo updated successfully.');
     }
     
     

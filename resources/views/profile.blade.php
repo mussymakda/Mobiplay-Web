@@ -82,16 +82,44 @@
             </div>
 
             <div class="col-xl-10 col-lg-9">
+              @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                  {{ session('success') }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              @endif
+              
+              @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                  {{ session('error') }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              @endif
+
+              @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                  <ul class="mb-0">
+                    @foreach($errors->all() as $error)
+                      <li>{{ $error }}</li>
+                    @endforeach
+                  </ul>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              @endif
+              
               <div class="setting-box">
                 <div class="mobiplay-profile">
                   <div class="mobiplay-left">
-                    <img src="{{ asset('assets/images/demo-profile.svg') }}" alt="{{ __('messages.profile') }}">
+                    <img src="{{ $profile_image_url }}" alt="{{ __('messages.profile') }}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
                     <div class="profile-name">
                       <h3>{{ $name }}</h3>
-                      <label>
-                        <input type="file" name="profile_image">
-                        {{ __('messages.add_photo') }}
-                      </label>
+                      <form action="{{ route('profile.upload-photo') }}" method="POST" enctype="multipart/form-data" id="profile-image-form">
+                        @csrf
+                        <label for="profile_image" style="cursor: pointer;">
+                          <input type="file" name="profile_image" id="profile_image" accept="image/*" style="display: none;" onchange="document.getElementById('profile-image-form').submit();">
+                          {{ __('messages.add_photo') }}
+                        </label>
+                      </form>
                     </div>
                   </div>
                   <div class="mobiplay-right">

@@ -98,16 +98,42 @@
                                                 <table class="table">
                                                     <thead>
                                                         <tr>
+                                                            <th>Type</th>
                                                             <th>Amount</th>
                                                             <th>Date</th>
                                                             <th>Status</th>
-                                                            
+                                                            <th>Details</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         @forelse($payments as $payment)
                                                             <tr>
-                                                                <td>{{ number_format($payment->amount / 100, 2) }} MXN</td>
+                                                                <td>
+                                                                    @switch($payment->type)
+                                                                        @case('deposit')
+                                                                            <span class="badge bg-primary">Deposit</span>
+                                                                            @break
+                                                                        @case('bonus')
+                                                                            <span class="badge bg-success">Bonus</span>
+                                                                            @break
+                                                                        @case('refund')
+                                                                            <span class="badge bg-info">Refund</span>
+                                                                            @break
+                                                                        @case('ad_spend')
+                                                                            <span class="badge bg-warning">Ad Spend</span>
+                                                                            @break
+                                                                        @default
+                                                                            <span class="badge bg-secondary">{{ ucfirst($payment->type) }}</span>
+                                                                    @endswitch
+                                                                </td>
+                                                                <td>
+                                                                    ${{ number_format($payment->amount, 2) }} MXN
+                                                                    @if($payment->type === 'deposit' && $payment->bonus_amount > 0)
+                                                                        <small class="text-success d-block">
+                                                                            <i class="fas fa-gift"></i> +${{ number_format($payment->bonus_amount, 2) }} bonus
+                                                                        </small>
+                                                                    @endif
+                                                                </td>
                                                                 <td>{{ $payment->created_at->format('M d, Y') }}</td>
                                                                 <td>
                                                                     @switch($payment->status)
@@ -121,13 +147,22 @@
                                                                             <span class="badge bg-danger">Failed</span>
                                                                             @break
                                                                         @default
-                                                                            <span class="badge bg-secondary">{{ $payment->status }}</span>
+                                                                            <span class="badge bg-secondary">{{ ucfirst($payment->status) }}</span>
                                                                     @endswitch
+                                                                </td>
+                                                                <td>
+                                                                    @if($payment->description)
+                                                                        {{ $payment->description }}
+                                                                    @elseif($payment->offer_id)
+                                                                        Related to offer ID: {{ $payment->offer_id }}
+                                                                    @else
+                                                                        -
+                                                                    @endif
                                                                 </td>
                                                             </tr>
                                                         @empty
                                                             <tr>
-                                                                <td colspan="3" class="text-center">No payments found</td>
+                                                                <td colspan="5" class="text-center">No payments found</td>
                                                             </tr>
                                                         @endforelse
                                                     </tbody>

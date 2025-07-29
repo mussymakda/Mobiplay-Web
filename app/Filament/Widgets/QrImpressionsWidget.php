@@ -150,15 +150,6 @@ class QrImpressionsWidget extends ChartWidget
             $qrScans[] = $dailyQrScans;
         }
 
-        // If no data, provide sample data for demonstration
-        $hasData = array_sum($impressions) > 0 || array_sum($qrScans) > 0;
-        
-        if (!$hasData) {
-            // Sample data showing realistic patterns
-            $impressions = [12, 18, 25, 32, 28, 35, 42, 38, 45, 52, 48, 55, 62, 58];
-            $qrScans = [3, 5, 7, 9, 8, 11, 13, 12, 15, 17, 16, 19, 21, 20];
-        }
-
         return [
             'dates' => $dates,
             'impressions' => $impressions,
