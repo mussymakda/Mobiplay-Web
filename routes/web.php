@@ -3,6 +3,7 @@ use App\Http\Controllers\DriverController;
 use App\Http\Controllers\EditProfileController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\CampaignController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrationController;
@@ -86,9 +87,9 @@ Route::get('/dashboard', function () {
 //     return view('campaign-wizard');
 // })->middleware('auth')->name('campaign-wizard');
 
-Route::get('/campaign-wizard', function () {
-    return view('campaign-wizard');
-})->name('campaign-wizard');
+Route::get('/campaign-wizard', [CampaignController::class, 'showCampaignWizard'])->middleware('auth')->name('campaign-wizard');
+Route::post('/campaign-wizard', [CampaignController::class, 'store'])->middleware('auth')->name('campaign.store');
+Route::post('/campaign/create', [CampaignController::class, 'create'])->middleware('auth')->name('campaign.create');
 
 // Signup Routes
 Route::get('/signup', [AuthController::class, 'showSignupForm'])->name('signup');
@@ -188,9 +189,7 @@ Route::get('analytics', function () {
     return view('analytics');
 })->middleware('auth')->name('analytics');
 
-Route::get('camplain-list', function () {
-    return view('camplain-list');
-})->middleware('auth')->name('camplain-list');
+Route::get('camplain-list', [CampaignController::class, 'showCampaignList'])->middleware('auth')->name('camplain-list');
 
 Route::get('about-us', function () {
     return view('about-us');

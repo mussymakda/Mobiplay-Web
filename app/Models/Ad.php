@@ -20,12 +20,13 @@ class Ad extends Model
         'latitude',
         'longitude',
         'location_name',
-        'radius_miles',
+        'radius_miles', // Fixed to match actual database column
         'status',
         'budget',
         'spent',
         'impressions',
         'qr_scans',
+        'scheduled_date',
     ];
 
     protected $casts = [
@@ -35,10 +36,12 @@ class Ad extends Model
         'spent' => 'decimal:2',
         'impressions' => 'integer',
         'qr_scans' => 'integer',
-        'radius_miles' => 'decimal:2',
+        'radius_miles' => 'decimal:2', // Fixed to match actual database column
+        'scheduled_date' => 'date',
     ];
 
     // Status constants
+    const STATUS_DRAFT = 'draft';
     const STATUS_PENDING = 'pending';
     const STATUS_ACTIVE = 'active';
     const STATUS_PAUSED = 'paused';
@@ -92,6 +95,16 @@ class Ad extends Model
     public function scopeActive($query)
     {
         return $query->where('status', self::STATUS_ACTIVE);
+    }
+
+    public function scopeDrafts($query)
+    {
+        return $query->where('status', self::STATUS_DRAFT);
+    }
+
+    public function getIsDraftAttribute()
+    {
+        return $this->status === self::STATUS_DRAFT;
     }
 
     public function scopeByLocation($query, $latitude, $longitude, $radiusKm = 50)

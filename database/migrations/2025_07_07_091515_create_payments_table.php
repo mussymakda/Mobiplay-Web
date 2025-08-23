@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,6 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // First, try to drop the table if it exists to clear any tablespace issues
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        Schema::dropIfExists('payments');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');

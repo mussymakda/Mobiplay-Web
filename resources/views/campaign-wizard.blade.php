@@ -25,13 +25,122 @@
     <!-- Mapbox JS -->
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js'></script>
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/turf/6.5.0/turf.min.js"></script>
 </head>
 <style>
     .advertisement img {
         width: 100%;
         height: auto;
+    }
+    
+    /* Minimal package selection styling */
+    .package-option {
+        cursor: pointer;
+    }
+    
+    .package-selected {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(40, 167, 69, 0.9);
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: bold;
+        color: white;
+    }
+    
+    /* Tablet Preview Styling */
+    .uploadpreview {
+        width: 100%;
+        max-width: 350px;
+        margin: 0 auto;
+    }
+    
+    .tablet-frame {
+        position: relative;
+        width: 100%;
+        background: #000000; /* Changed to black */
+        border-radius: 20px;
+        padding: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .tablet-bezel {
+        position: relative;
+        width: 100%;
+        background: #1a1a1a; /* Darker black for bezel */
+        border-radius: 12px;
+        padding: 10px;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .preview-wrapper {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9; /* Changed to 16:9 aspect ratio */
+        background: #f8f9fa;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .preview-media {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .preview-img, .preview-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    
+    .qr-overlay {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 5px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        display: none;
+        z-index: 10;
+    }
+    
+    .qr-overlay #qrcode {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .qr-overlay #qrcode img {
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 4px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .uploadpreview {
+            max-width: 280px;
+        }
+        
+        .tablet-frame {
+            padding: 12px;
+        }
+        
+        .tablet-bezel {
+            padding: 8px;
+        }
     }
 </style>
 
@@ -62,7 +171,7 @@
                 <li>
                     <a href="#" class="step-link active" data-step="0">
                         <label><img src="assets/images/trophy.svg" /></label>
-                        <span>Goal</span>
+                        <span>Campaign</span>
                     </a>
                 </li>
                 <li>
@@ -71,19 +180,16 @@
                         <span>Creative</span>
                     </a>
                 </li>
-
-
                 <li>
                     <a href="#" class="step-link" data-step="2">
                         <label><img src="assets/images/location.svg" /></label>
                         <span>Locations</span>
-
                     </a>
                 </li>
                 <li>
                     <a href="#" class="step-link" data-step="3">
                         <label><img src="assets/images/schedule.svg" /></label>
-                        <span>Priority</span>
+                        <span>Packages</span>
                     </a>
                 </li>
             </ul>
@@ -94,8 +200,41 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-14">
-                    <form id="multiStepForm">
-                        {{-- Step 1: Goals --}}
+                    <form id="multiStepForm" method="POST" action="{{ route('campaign.create') }}" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" name="save_as_draft" id="save_as_draft" value="0">
+                        
+                        {{-- Display validation errors --}}
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                        
+                        {{-- Display success message --}}
+                        @if (session('success'))
+                            <div class="alert alert-success">
+                                {{ session('success') }}
+                            </div>
+                        @endif
+                        
+                        {{-- Display info message --}}
+                        @if (session('info'))
+                            <div class="alert alert-info">
+                                {{ session('info') }}
+                            </div>
+                        @endif
+                        <!-- Hidden inputs to store form data -->
+                        <input type="hidden" id="selectedPackageId" name="selected_package_id" value="">
+                        <input type="hidden" id="selectedRadius" name="selected_radius" value="10">
+                        <input type="hidden" id="selectedLatitude" name="selected_latitude" value="">
+                        <input type="hidden" id="selectedLongitude" name="selected_longitude" value="">
+                        <input type="hidden" id="scheduledDate" name="scheduled_date" value="{{ date('Y-m-d') }}">
+                        {{-- Step 1: Campaign Name --}}
                         <div class="step" id="step-1">
                             <section id="content-wrapper">
                                 <div class="container">
@@ -104,48 +243,16 @@
                                             <div class="choose-campgain">
                                                 <img src="assets/images/campaign-icon.svg">
                                                 <h2>Create a Campaign</h2>
-                                                <p>Choose a Campaign Goal</p>
+                                                <p>Enter your campaign details</p>
                                             </div>
                                             <div class="row justify-content-center">
-                                                <div class="col-lg-4">
-                                                    <a href="#" class="campe-box">
-                                                        <div class="camp-img">
-                                                            <img src="assets/images/c1.svg">
-                                                        </div>
-                                                        <div class="camp-title">
-                                                            <h3>Brand Awareness</h3>
-                                                            <p>Connect with your audience and make a lasting impression
-                                                            </p>
-                                                        </div>
-                                                    </a>
+                                                <div class="col-lg-8">
+                                                    <div class="form-group mb-4">
+                                                        <label for="campaignName" class="form-label">Campaign Name <span class="text-danger">*</span></label>
+                                                        <input type="text" id="campaignName" name="campaign_name" class="form-control"
+                                                            placeholder="Enter Campaign Name" required>
+                                                    </div>
                                                 </div>
-                                                <div class="col-lg-4">
-                                                    <a href="#" class="campe-box">
-                                                        <div class="camp-img">
-                                                            <img src="assets/images/c2.svg">
-                                                        </div>
-                                                        <div class="camp-title">
-                                                            <h3>In-Person Visits</h3>
-                                                            <p>Increase visitors to your location</p>
-                                                        </div>
-                                                    </a>
-                                                </div>
-                                                <div class="col-lg-4">
-                                                    <a href="#" class="campe-box">
-                                                        <div class="camp-img">
-                                                            <img src="assets/images/c3.svg">
-                                                        </div>
-                                                        <div class="camp-title">
-                                                            <h3>Mobile Conversions</h3>
-                                                            <p>Create leads and increase mobile visits to your website
-                                                                or app</p>
-                                                        </div>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                            <div class="form-group mb-3 mt-3">
-                                                <input type="text" name="" class="form-control"
-                                                    placeholder="Enter Campaign Name">
                                             </div>
                                         </div>
                                     </div>
@@ -173,7 +280,7 @@
                                                                         <div class="uploadmedia" id="drop-zone">
                                                                             <!-- Changed id to match the JS -->
                                                                             <label>
-                                                                                <input type="file" name=""
+                                                                                <input type="file" name="media_file"
                                                                                     id="fileElem"
                                                                                     accept="image/*,video/*"
                                                                                     style="display:none;" />
@@ -210,18 +317,10 @@
                                                                 </div>
                                                                 <div class="col-lg-7">
                                                                     <div class="form-group mb-3">
-                                                                        <h6>Call to Action (CTA)<sup>*</sup></h6>
+                                                                        <h6>Campaign URL</h6>
                                                                         <input type="text"
                                                                             class="form-control bg-grey"
-                                                                            id="cta" placeholder="Enter CTA">
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-7">
-                                                                    <div class="form-group mb-3">
-                                                                        <h6>Call to Action URL<sup>*</sup></h6>
-                                                                        <input type="text"
-                                                                            class="form-control bg-grey"
-                                                                            id="ctaUrl" placeholder="Enter URL">
+                                                                            id="ctaUrl" name="ctaUrl" placeholder="Enter URL (optional)">
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-lg-5 align-content-center">
@@ -231,33 +330,44 @@
                                                                         </p>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-12 mb-3">
-                                                                    <button type="button" id="generateQr"
-                                                                        class="btn btn-primary">Generate QR
-                                                                        Code</button>
-                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-lg-4">
                                                     <div class="uploadpreview">
-                                                        <h6>Preview</h6>
-                                                        <div id="preview-container" class="text-center">
-                                                            <img id="preview-image" src="assets/images/addbase.png"
-                                                                alt="assets/images/addbase.png"
-                                                                style=" max-width: 100%;" />
-                                                            <video id="preview-video" controls
-                                                                style="display: none; max-width: 100%;">
-                                                                <source id="video-source" src=""
-                                                                    type="video/mp4">
-                                                                Your browser does not support the video tag.
-                                                            </video>
-                                                            <span id="remove-media" class=" mt-2"
-                                                                style="display: none;">Remove Media</button>
+                                                        <h6><i class="fa fa-tablet-alt"></i> Tablet Preview (16:9 Aspect Ratio)</h6>
+                                                        <div class="tablet-frame">
+                                                            <div class="tablet-bezel">
+                                                                <div id="preview-container" class="preview-wrapper">
+                                                                    <div class="preview-media">
+                                                                        <img id="preview-image" src="assets/images/addbase.png"
+                                                                            alt="Media Preview" class="preview-img" />
+                                                                        <video id="preview-video" controls class="preview-video" style="display: none;">
+                                                                            <source id="video-source" src="" type="video/mp4">
+                                                                            Your browser does not support the video tag.
+                                                                        </video>
+                                                                        
+                                                                        <!-- QR Code Overlay - Positioned at bottom right over the media -->
+                                                                        <div id="qrcode-overlay" class="qr-overlay">
+                                                                            <div id="qrcode"></div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- Remove media button outside the frame -->
+                                                        <button id="remove-media" class="btn btn-sm btn-outline-danger mt-3"
+                                                            style="display: none;">
+                                                            <i class="fa fa-trash"></i> Remove Media
+                                                        </button>
+                                                        
+                                                        <!-- QR Code Status -->
+                                                        <div id="qr-status" class="mt-2">
+                                                            <small class="text-muted">QR code will be automatically generated when URL is entered</small>
                                                         </div>
                                                     </div>
-                                                    <div id="qrcode" style="margin-top: 20px;"></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -282,19 +392,10 @@
                                                 </div>
                                                 <div class="location-list">
                                                     <div class="location-box active">
-                                                        <div class="location-select">
-                                                            <select class="form-select" id="location-select">
-                                                                <option value="Queretaro">Santiago de Queretaro
-                                                                </option>
-                                                                <option value="Mexico City">Mexico City</option>
-                                                            </select>
-                                                            <a href="#"><img src="assets/images/delete.svg"></a>
-                                                        </div>
                                                         <div class="location-address">
-                                                            <label>Address</label>
+                                                            <label>Selected Address</label>
                                                             <div class="address-box">
-                                                                <p id="address">Aeropuerto Intercontinental de
-                                                                    Queretaro</p>
+                                                                <p id="address">Click on map or search to select location</p>
                                                             </div>
                                                             <div class="location-radius">
                                                                 <label>Set Radius</label>
@@ -327,30 +428,50 @@
                                             <p class="text-start">Create a budget for your campaign</p>
                                         </div>
                                         <div class="row justify-content-between">
-                                            <div class="col-lg-4">
-                                                <div class="spend-box" style="background-image: url('{{ asset('assets/images/bg1.png') }}');">
-                                                    <div class="priority-badge">PRIORITY : LOW</div>
-                                                    <h5>Basic Package</h5>
-                                                    <p>Priority Level: Low</p>
-                                                    <p>Your Ads will be displayed on Non-Rush hours</p>
+                                            @if(isset($packages) && $packages->count() > 0)
+                                                @foreach($packages as $index => $package)
+                                                    <div class="col-lg-4">
+                                                        <div class="spend-box package-option" data-package-id="{{ $package->id }}" style="background-image: url('{{ asset('assets/images/bg' . (($index % 3) + 1) . '.png') }}'); cursor: pointer;">
+                                                            <div class="priority-badge">PRIORITY : {{ strtoupper($package->priority_text ?? 'MEDIUM') }}</div>
+                                                            <h5>{{ $package->name }}</h5>
+                                                            <p>Priority Level: {{ ucfirst($package->priority_text ?? 'Medium') }}</p>
+                                                            <p>{{ $package->description ?? 'Package description not available' }}</p>
+                                                            @if($package->cost_per_impression)
+                                                                <p><strong>{{ $package->getFormattedCostAttribute() }}</strong></p>
+                                                            @endif
+                                                            <div class="package-selected" style="display: none;">
+                                                                <i class="fa fa-check-circle text-success"></i> Selected
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            @else
+                                                <!-- Fallback to hardcoded packages if no packages available -->
+                                                <div class="col-lg-4">
+                                                    <div class="spend-box" style="background-image: url('{{ asset('assets/images/bg1.png') }}');">
+                                                        <div class="priority-badge">PRIORITY : LOW</div>
+                                                        <h5>Basic Package</h5>
+                                                        <p>Priority Level: Low</p>
+                                                        <p>Your Ads will be displayed on Non-Rush hours</p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="col-lg-4" >
-                                                <div class="spend-box" style="background-image: url('{{ asset('assets/images/bg2.png') }}');">
-                                                    <div class="priority-badge">PRIORITY : HIGH</div>
-                                                    <h5>Priority Package</h5>
-                                                    <p>Priority Level: High</p>
-                                                    <p>Your Ads will be displayed in Rush hours</p>
+                                                <div class="col-lg-4">
+                                                    <div class="spend-box" style="background-image: url('{{ asset('assets/images/bg2.png') }}');">
+                                                        <div class="priority-badge">PRIORITY : HIGH</div>
+                                                        <h5>Priority Package</h5>
+                                                        <p>Priority Level: High</p>
+                                                        <p>Your Ads will be displayed in Rush hours</p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="col-lg-4">
-                                                <div class="spend-box" style="background-image: url('{{ asset('assets/images/bg3.png') }}');">
-                                                    <div class="priority-badge">PRIORITY : MAXIMUM</div>
-                                                    <h5>Enterprise Package</h5>
-                                                    <p>Priority Level: Maximum</p>
-                                                    <p>Your Ads will be displayed throughout the day</p>
+                                                <div class="col-lg-4">
+                                                    <div class="spend-box" style="background-image: url('{{ asset('assets/images/bg3.png') }}');">
+                                                        <div class="priority-badge">PRIORITY : MAXIMUM</div>
+                                                        <h5>Enterprise Package</h5>
+                                                        <p>Priority Level: Maximum</p>
+                                                        <p>Your Ads will be displayed throughout the day</p>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            @endif
                                         </div>
                                         <div class="row align-items-center justify-content-between mt-4">
                                             <div class="col-lg-6">
@@ -363,8 +484,8 @@
                                                     <div class="quantity">
                                                         <button type="button" class="minus" aria-label="Decrease"><img
                                                                 src="assets/images/minus.svg"></button>
-                                                        <input type="number" class="input-box" value="1.00"
-                                                            min="1" max="10">
+                                                        <input type="number" class="input-box" name="daily_budget" value="1.00"
+                                                            min="1" max="1000">
                                                         <button type="button" class="plus" aria-label="Increase"><img
                                                                 src="assets/images/plus.svg"></button>
                                                     </div>
@@ -401,6 +522,7 @@
                       
                         <div class="camp-grp-btn">
                             <a href="#" class="btn btn-secondary prev-btn" id="prev">Back</a>
+                            <a href="#" class="btn btn-outline-primary" id="save-draft" style="display: none;">Save as Draft</a>
                             <a href="#" class="btn btn-primary next-btn" id="next">Next</a>
                         </div>
                     </form>
@@ -411,7 +533,8 @@
     <!-- Load jQuery before ion.rangeSlider -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/turf/6.5.0/turf.min.js"></script>
+    <!-- Load Turf.js for geospatial calculations -->
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     <script type="text/javascript">
         // Updated Quantity Control Functionality
         (function() {
@@ -421,12 +544,33 @@
             const inputBox = quantityContainer.querySelector(".input-box");
             const maxValue = 1000; // Set maximum value for quantity input
 
+            // Get stats elements
+            const dailyImpressionsEl = document.querySelector('.col-lg-2:nth-child(2) h4');
+            const monthlyImpressionsEl = document.querySelector('.col-lg-2:nth-child(3) h4');
+            const monthlySpendEl = document.querySelector('.col-lg-2:nth-child(4) h4');
+
             inputBox.max = maxValue; // Ensure max is set in input attributes
+
+            function updateStats() {
+                const dailyBudget = parseFloat(inputBox.value) || 0;
+                
+                // Calculate stats (these are example calculations - adjust as needed)
+                const costPerImpression = 0.01; // $0.01 per impression
+                const dailyImpressions = Math.floor(dailyBudget / costPerImpression);
+                const monthlyImpressions = dailyImpressions * 30;
+                const monthlySpend = dailyBudget * 30;
+
+                // Update display
+                if (dailyImpressionsEl) dailyImpressionsEl.textContent = dailyImpressions.toLocaleString();
+                if (monthlyImpressionsEl) monthlyImpressionsEl.textContent = monthlyImpressions.toLocaleString();
+                if (monthlySpendEl) monthlySpendEl.textContent = '$' + monthlySpend.toLocaleString();
+            }
 
             function updateButtonStates() {
                 const value = parseInt(inputBox.value);
                 minusBtn.disabled = value <= 1;
                 plusBtn.disabled = value >= maxValue;
+                updateStats(); // Update stats when value changes
             }
 
             function adjustValue(change) {
@@ -436,21 +580,77 @@
                 updateButtonStates();
             }
 
+            // Event listeners
             minusBtn.onclick = () => adjustValue(-1);
             plusBtn.onclick = () => adjustValue(1);
+            inputBox.addEventListener('input', updateButtonStates);
+            
+            // Initialize stats
+            updateStats();
         })();
     </script>
     <script>
-        // Initialize Mapbox
+        // Initialize Mapbox - Simplified approach
+        console.log('Starting map initialization...');
 
-        mapboxgl.accessToken =
-            'pk.eyJ1IjoibXVzdGFuc2lybWFrZGEiLCJhIjoiY20yYzNpd213MHJhNTJqcXduNjU4ZGFkdyJ9.qnsW91lfIZ1EniLcPlAEkQ';
+        // Check if libraries are available, if not, proceed without Turf.js
+        function initializeMap() {
+            if (typeof mapboxgl === 'undefined') {
+                console.error('Mapbox GL JS not loaded, retrying...');
+                setTimeout(initializeMap, 500);
+                return;
+            }
+            
+            if (typeof MapboxGeocoder === 'undefined') {
+                console.error('Mapbox Geocoder not loaded, retrying...');
+                setTimeout(initializeMap, 500);
+                return;
+            }
+            
+            console.log('Required libraries loaded, initializing map...');
+            console.log('Turf.js available:', typeof turf !== 'undefined');
+
+            mapboxgl.accessToken =
+                'pk.eyJ1IjoibXVzdGFuc2lybWFrZGEiLCJhIjoiY20yYzNpd213MHJhNTJqcXduNjU4ZGFkdyJ9.qnsW91lfIZ1EniLcPlAEkQ';
         var map = new mapboxgl.Map({
             container: 'map', // ID of the map container
             style: 'mapbox://styles/mapbox/streets-v11', // Map style
             center: [-100.392, 20.588], // Initial map center [lng, lat]
             zoom: 10 // Initial zoom level
         });
+
+        // Make map globally accessible
+        window.map = map;
+
+        // Add search control
+        const geocoder = new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken,
+            mapboxgl: mapboxgl,
+            placeholder: 'Search for places',
+            bbox: [-118.8, 14.5, -86.7, 32.7], // Mexico bounding box
+            countries: 'mx' // Restrict to Mexico
+        });
+        
+        map.addControl(geocoder);
+
+        // Handle geocoder result selection
+        geocoder.on('result', function(e) {
+            const coordinates = e.result.center;
+            marker.setLngLat(coordinates);
+            circleCoordinates = coordinates;
+            
+            // Store location data in hidden inputs
+            document.getElementById('selectedLatitude').value = coordinates[1];
+            document.getElementById('selectedLongitude').value = coordinates[0];
+            
+            // Update address and draw circle
+            getLocationName(coordinates);
+            drawCircle(radius);
+        });
+
+        // Add navigation controls
+        map.addControl(new mapboxgl.NavigationControl());
+        
         // Create a marker
         var marker = new mapboxgl.Marker({
                 draggable: true // Make the marker draggable
@@ -463,12 +663,28 @@
         var radius = 10; // Default radius in kilometers
         var circleCoordinates = [-100.392, 20.588]; // Initial circle coordinates
 
+        // Make variables globally accessible
+        window.radius = radius;
+        window.radiusLayerId = radiusLayerId;
+        window.circleCoordinates = circleCoordinates;
+
+        // Wait for map to load before drawing initial circle
+        map.on('load', function() {
+            drawCircle(radius); // Draw initial circle
+            getLocationName(circleCoordinates); // Get initial location name
+        });
+
         // Function to update marker position and address
         function updateMarkerPosition() {
             var lngLat = marker.getLngLat();
-            circleCoordinates = [lngLat.lng, lngLat.lat];
-            getLocationName(circleCoordinates); // Get the location name
-            drawCircle(radius); // Draw the radius circle
+            window.circleCoordinates = [lngLat.lng, lngLat.lat];
+            
+            // Store location data in hidden inputs
+            document.getElementById('selectedLatitude').value = lngLat.lat;
+            document.getElementById('selectedLongitude').value = lngLat.lng;
+            
+            getLocationName(window.circleCoordinates); // Get the location name
+            window.drawCircle(window.radius); // Draw the radius circle
         }
 
         // Update the address when marker is dragged
@@ -501,48 +717,147 @@
                 });
         }
 
-        // Function to draw a circle on the map
-        function drawCircle(radius) {
-            var radiusInMeters = radius * 1000; // Convert km to meters
-            var circle = turf.circle(circleCoordinates, radiusInMeters, {
-                steps: 64,
-                units: 'meters',
-            });
+        // Simplified circle drawing function
+        function drawCircle(radiusKm) {
+            if (!window.map || !window.map.isStyleLoaded()) {
+                setTimeout(function() {
+                    drawCircle(radiusKm);
+                }, 500);
+                return;
+            }
 
-            // Remove the existing circle layer if it exists
+            window.circleCoordinates = window.circleCoordinates || [-100.392, 20.588];
+            console.log('Drawing circle with radius:', radiusKm, 'km at coordinates:', window.circleCoordinates);
+
+            // Use Turf.js if available, otherwise use manual method
+            if (typeof turf !== 'undefined') {
+                drawCircleWithTurf(radiusKm);
+            } else {
+                drawCircleManual(radiusKm);
+            }
+        }
+
+        // Make drawCircle globally accessible
+        window.drawCircle = drawCircle;
+
+        // Circle drawing with Turf.js
+        function drawCircleWithTurf(radiusKm) {
+            try {
+                var radiusInMeters = radiusKm * 1000;
+                var circle = turf.circle(window.circleCoordinates, radiusInMeters, {
+                    steps: 64,
+                    units: 'meters',
+                });
+
+                updateCircleOnMap(circle);
+                console.log('Circle drawn using Turf.js');
+            } catch (error) {
+                console.error('Error with Turf.js, falling back to manual method:', error);
+                drawCircleManual(radiusKm);
+            }
+        }
+
+        // Manual circle drawing function (primary method)
+        function drawCircleManual(radiusKm) {
+            console.log('Drawing circle manually');
+            
+            // Simple circle approximation using points
+            const center = window.circleCoordinates;
+            const radiusInDegrees = radiusKm / 111; // Rough conversion: 1 degree ≈ 111 km
+            const points = [];
+            const steps = 64;
+            
+            for (let i = 0; i < steps; i++) {
+                const angle = (i / steps) * 2 * Math.PI;
+                const lng = center[0] + radiusInDegrees * Math.cos(angle);
+                const lat = center[1] + radiusInDegrees * Math.sin(angle);
+                points.push([lng, lat]);
+            }
+            points.push(points[0]); // Close the polygon
+            
+            const circle = {
+                type: 'Feature',
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [points]
+                }
+            };
+
+            updateCircleOnMap(circle);
+            console.log('Circle drawn manually');
+        }
+
+        // Update circle on map (common function)
+        function updateCircleOnMap(circleData) {
+            const map = window.map;
+            const radiusLayerId = window.radiusLayerId;
+            
+            if (!map) return;
+            
+            // Remove existing circle layers if they exist
+            if (map.getLayer(radiusLayerId + '-border')) {
+                map.removeLayer(radiusLayerId + '-border');
+            }
             if (map.getLayer(radiusLayerId)) {
                 map.removeLayer(radiusLayerId);
+            }
+            if (map.getSource(radiusLayerId)) {
                 map.removeSource(radiusLayerId);
             }
 
             // Add the circle as a new source
             map.addSource(radiusLayerId, {
                 type: 'geojson',
-                data: circle
+                data: circleData
             });
 
-            // Add a new layer to visualize the radius
+            // Add fill layer
             map.addLayer({
                 id: radiusLayerId,
                 type: 'fill',
                 source: radiusLayerId,
                 layout: {},
                 paint: {
-                    'fill-color': 'rgba(0, 0, 255, 0.5)', // Circle color
-                    'fill-opacity': 0.5 // Circle opacity
+                    'fill-color': '#007cbf',
+                    'fill-opacity': 0.2
+                }
+            });
+
+            // Add border layer
+            map.addLayer({
+                id: radiusLayerId + '-border',
+                type: 'line',
+                source: radiusLayerId,
+                layout: {},
+                paint: {
+                    'line-color': '#007cbf',
+                    'line-width': 2,
+                    'line-opacity': 0.8
                 }
             });
         }
 
-        // Function to handle radius slider
-        document.getElementById('radius-slider').addEventListener('input', function() {
-            radius = this.value; // Update the radius value
-            document.getElementById('radius-value').value = radius;
-            drawCircle(radius); // Redraw the circle with the updated radius
-        });
+        // Function to handle radius slider - Remove this as it conflicts with ionRangeSlider
+        // document.getElementById('radius-slider').addEventListener('input', function() {
+        //     radius = this.value; // Update the radius value
+        //     document.getElementById('radius-value').value = radius;
+        //     drawCircle(radius); // Redraw the circle with the updated radius
+        // });
 
         // Initial draw of the circle
-        drawCircle(radius);
+        map.on('load', function() {
+            drawCircle(radius);
+        });
+        
+        } // End of initializeMap function
+        
+        // Initialize immediately or when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeMap);
+        } else {
+            // DOM is already loaded
+            setTimeout(initializeMap, 100);
+        }
     </script>
 
     <script type="text/javascript">
@@ -550,20 +865,35 @@
             $input = $(".js-input"),
             instance,
             min = 1,
-            max = 100;
+            max = 50; // Reasonable max radius for targeting
 
         $range.ionRangeSlider({
             skin: "round",
             type: "single",
             min: min,
             max: max,
-            from: 1,
+            from: 10, // Default to 10km
 
             onStart: function(data) {
                 $input.prop("value", data.from);
+                // Update map radius if map exists
+                if (typeof radius !== 'undefined' && typeof drawCircle === 'function') {
+                    radius = data.from;
+                    drawCircle(radius);
+                }
             },
             onChange: function(data) {
                 $input.prop("value", data.from);
+                // Update map radius when slider changes
+                if (typeof window.drawCircle === 'function' && window.map) {
+                    window.radius = data.from;
+                    window.drawCircle(data.from);
+                    // Store radius in hidden input
+                    document.getElementById('selectedRadius').value = data.from;
+                    console.log('Radius updated to:', data.from, 'km');
+                } else {
+                    console.log('drawCircle function or map not available');
+                }
             }
         });
 
@@ -582,15 +912,27 @@
             instance.update({
                 from: val
             });
+
+            // Update map radius when input changes
+            if (typeof radius !== 'undefined' && typeof drawCircle === 'function') {
+                radius = val;
+                drawCircle(radius);
+            }
         });
     </script>
     <script type="text/javascript">
-        document.getElementById("generateQr").onclick = function() {
+        // Automatic QR Code generation when URL is entered
+        function generateQRCode() {
             const ctaUrl = document.getElementById("ctaUrl").value.trim();
             const qrcodeContainer = document.getElementById("qrcode");
+            const qrcodeOverlay = document.querySelector(".qr-overlay");
+            const qrStatus = document.getElementById("qr-status");
 
             if (!ctaUrl) {
-                alert("Please enter a URL to generate the QR code.");
+                // Hide QR code if URL is empty
+                qrcodeContainer.innerHTML = "";
+                qrcodeOverlay.style.display = 'none';
+                qrStatus.innerHTML = '<small class="text-muted">QR code will be automatically generated when URL is entered</small>';
                 return;
             }
 
@@ -598,27 +940,114 @@
             try {
                 new QRCode(qrcodeContainer, {
                     text: ctaUrl,
-                    width: 128,
-                    height: 128,
+                    width: 35,  // Smaller size for better overlay
+                    height: 35, // Smaller size for better overlay
                     colorDark: "#000000",
                     colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H // Fixed to remove comma error
+                    correctLevel: QRCode.CorrectLevel.H
                 });
+                
+                // Show the QR code overlay on the media
+                qrcodeOverlay.style.display = 'block';
+                qrStatus.innerHTML = '<small class="text-success"><i class="fa fa-check"></i> QR code generated and overlaid on media</small>';
+                
             } catch (error) {
                 console.error("QR Code generation error:", error);
-                alert("An error occurred while generating the QR code. Please try again.");
+                qrStatus.innerHTML = '<small class="text-danger"><i class="fa fa-exclamation-triangle"></i> Error generating QR code</small>';
             }
-        };
+        }
+
+        // Add event listener for automatic QR generation
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctaUrlInput = document.getElementById("ctaUrl");
+            if (ctaUrlInput) {
+                ctaUrlInput.addEventListener('input', generateQRCode);
+                ctaUrlInput.addEventListener('paste', function() {
+                    setTimeout(generateQRCode, 10); // Small delay to ensure pasted content is processed
+                });
+            }
+        });
+    </script>
+
+    <script>
+        // Package selection functionality
+        document.addEventListener("DOMContentLoaded", function() {
+            const packageOptions = document.querySelectorAll('.package-option');
+            const selectedPackageInput = document.getElementById('selectedPackageId');
+
+            packageOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove active class from all packages
+                    packageOptions.forEach(pkg => {
+                        pkg.classList.remove('selected');
+                        pkg.querySelector('.package-selected').style.display = 'none';
+                        pkg.style.border = '';
+                        pkg.style.transform = '';
+                        pkg.style.boxShadow = '';
+                    });
+
+                    // Add active class to selected package
+                    this.classList.add('selected');
+                    this.querySelector('.package-selected').style.display = 'block';
+                    this.style.border = '3px solid #28a745'; // Green color instead of blue
+                    this.style.transform = 'scale(1.02)'; // Slight scale effect
+                    this.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.3)'; // Green shadow
+
+                    // Store selected package ID
+                    const packageId = this.getAttribute('data-package-id');
+                    selectedPackageInput.value = packageId;
+                });
+            });
+        });
     </script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const steps = document.querySelectorAll(".step");
             const stepLinks = document.querySelectorAll(".step-link");
+            const nextBtn = document.getElementById("next");
+            const prevBtn = document.getElementById("prev");
             let currentStep = 0;
 
             // Initially show the first step
             steps[currentStep].style.display = "block";
+            
+            // Function to validate current step
+            function validateCurrentStep() {
+                switch(currentStep) {
+                    case 0: // Campaign Name step
+                        const campaignName = document.getElementById("campaignName").value.trim();
+                        if (!campaignName) {
+                            alert("Please enter a campaign name.");
+                            return false;
+                        }
+                        return true;
+                    case 1: // Creative step
+                        const fileInput = document.getElementById("fileElem");
+                        if (!fileInput.files.length) {
+                            alert("Please upload a media file.");
+                            return false;
+                        }
+                        return true;
+                    case 2: // Location step
+                        // Location is optional or has defaults, so always valid
+                        return true;
+                    case 3: // Packages step
+                        // Only require package selection if dynamic packages are loaded
+                        const packageOptions = document.querySelectorAll('.package-option');
+                        if (packageOptions.length > 0) {
+                            const selectedPackage = document.getElementById("selectedPackageId").value;
+                            if (!selectedPackage) {
+                                alert("Please select a package.");
+                                return false;
+                            }
+                        }
+                        return true;
+                    default:
+                        return true;
+                }
+            }
+
             // Function to show a specific step
             function showStep(stepIndex) {
                 steps[currentStep].style.display = "none"; // Hide current step
@@ -629,19 +1058,60 @@
                 stepLinks.forEach((link, index) => {
                     link.classList.toggle("active", index === currentStep);
                 });
+
+                // Update button states
+                const saveDraftBtn = document.getElementById("save-draft");
+                prevBtn.style.display = currentStep === 0 ? "none" : "inline-block";
+                saveDraftBtn.style.display = currentStep === steps.length - 1 ? "inline-block" : "none";
+                nextBtn.textContent = currentStep === steps.length - 1 ? "Complete Campaign" : "Next";
+
+                // Special handling for map step
+                if (currentStep === 2) {
+                    // Wait and trigger the map to resize
+                    setTimeout(() => {
+                        if (typeof map !== 'undefined' && map && typeof map.resize === 'function') {
+                            map.resize();
+                            console.log('Map resized for step 3');
+                        } else {
+                            console.log('Map not available for resize');
+                        }
+                    }, 300);
+                }
             }
 
             // Next button functionality
-            document.getElementById("next").addEventListener("click", () => {
-                if (currentStep < steps.length - 1) {
-                    showStep(currentStep + 1);
+            nextBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                
+                if (validateCurrentStep()) {
+                    if (currentStep < steps.length - 1) {
+                        showStep(currentStep + 1);
+                    } else {
+                        // Final step - submit the form
+                        document.getElementById('multiStepForm').submit();
+                    }
                 }
             });
 
             // Previous button functionality
-            document.getElementById("prev").addEventListener("click", () => {
+            prevBtn.addEventListener("click", (e) => {
+                e.preventDefault();
                 if (currentStep > 0) {
                     showStep(currentStep - 1);
+                }
+            });
+
+            // Save as Draft button functionality
+            const saveDraftBtn = document.getElementById("save-draft");
+            saveDraftBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                
+                if (validateCurrentStep()) {
+                    // Set the draft flag
+                    document.getElementById('save_as_draft').value = '1';
+                    
+                    // Submit the form
+                    document.getElementById('multiStepForm').submit();
                 }
             });
 
@@ -649,21 +1119,30 @@
             stepLinks.forEach((link) => {
                 link.addEventListener("click", (event) => {
                     event.preventDefault(); // Prevent default link behavior
-                    const stepIndex = parseInt(link.getAttribute("data-step"),
-                        10); // Get the step number
-                    if (stepIndex !== currentStep) {
-                        showStep(stepIndex); // Show the clicked step
+                    const stepIndex = parseInt(link.getAttribute("data-step"), 10);
+                    
+                    // Only allow navigation if all previous steps are valid
+                    let canNavigate = true;
+                    for (let i = 0; i < stepIndex; i++) {
+                        const originalStep = currentStep;
+                        currentStep = i;
+                        if (!validateCurrentStep()) {
+                            canNavigate = false;
+                            break;
+                        }
+                        currentStep = originalStep;
                     }
-                    if (stepIndex ==2) {
-
-
-                        // Waent and it a momthen trigger the map to resize
-                        setTimeout(() => {
-                            map.resize();
-                        }, 1);
+                    
+                    if (canNavigate && stepIndex !== currentStep) {
+                        showStep(stepIndex);
+                    } else if (!canNavigate) {
+                        alert("Please complete all previous steps before proceeding.");
                     }
                 });
             });
+
+            // Initialize first step
+            showStep(0);
         });
     </script>
     <script>
@@ -694,10 +1173,21 @@
             fileInput.addEventListener("change", () => handleFiles(fileInput.files));
 
             removeMediaBtn.onclick = () => {
+                const qrcodeOverlay = document.querySelector(".qr-overlay");
+                const qrStatus = document.getElementById("qr-status");
+                const previewWrapper = document.querySelector('.preview-wrapper');
+                
                 previewImage.src = "assets/images/addbase.png";
                 previewImage.style.display = "block";
                 previewVideo.style.display = "none";
                 removeMediaBtn.style.display = "none";
+                
+                // Reset preview wrapper background
+                previewWrapper.style.background = '#f8f9fa';
+                
+                // Hide QR code overlay when media is removed
+                qrcodeOverlay.style.display = "none";
+                qrStatus.innerHTML = '<small class="text-muted">Generate QR code to see it overlaid on your media</small>';
             };
 
             function handleFiles(files) {
@@ -705,16 +1195,21 @@
                 const file = files[0];
                 const reader = new FileReader();
                 reader.onload = (event) => {
+                    const previewWrapper = document.querySelector('.preview-wrapper');
+                    
                     if (file.type.startsWith("video/")) {
                         videoSource.src = event.target.result;
                         previewVideo.load();
-                        previewVideo.play();
                         previewVideo.style.display = "block";
                         previewImage.style.display = "none";
+                        // Add some styling for video
+                        previewWrapper.style.background = '#000';
                     } else if (file.type.startsWith("image/")) {
                         previewImage.src = event.target.result;
                         previewImage.style.display = "block";
                         previewVideo.style.display = "none";
+                        // Reset background for images
+                        previewWrapper.style.background = '#f8f9fa';
                     }
                     removeMediaBtn.style.display = "block";
                 };
