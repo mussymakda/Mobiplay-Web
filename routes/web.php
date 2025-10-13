@@ -1,6 +1,15 @@
 <?php
+<<<<<<< HEAD
 
 use App\Http\Controllers\AnalyticsController;
+=======
+use App\Http\Controllers\DriverController;
+use App\Http\Controllers\EditProfileController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\CampaignController;
+use Illuminate\Support\Facades\Route;
+>>>>>>> bdd4171edc9db61cf35e2c93be6fc2724fe5c370
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DriverRegistrationController;
@@ -101,7 +110,9 @@ Route::get('/dashboard', function () {
 //     return view('campaign-wizard');
 // })->middleware('auth')->name('campaign-wizard');
 
-Route::get('/campaign-wizard', [CampaignController::class, 'create'])->middleware('auth')->name('campaign-wizard');
+Route::get('/campaign-wizard', [CampaignController::class, 'showCampaignWizard'])->middleware('auth')->name('campaign-wizard');
+Route::post('/campaign-wizard', [CampaignController::class, 'store'])->middleware('auth')->name('campaign.store');
+Route::post('/campaign/create', [CampaignController::class, 'create'])->middleware('auth')->name('campaign.create');
 
 // Signup Routes
 Route::get('/signup', [AuthController::class, 'showSignupForm'])->name('signup');
@@ -216,6 +227,7 @@ Route::middleware('auth')->group(function () {
     // API endpoint for nearby drivers
     Route::get('api/campaigns/nearby-drivers', [CampaignController::class, 'getNearbyDrivers'])->name('campaigns.nearby-drivers');
 });
+>>>>>>> bdd4171edc9db61cf35e2c93be6fc2724fe5c370
 
 Route::get('about-us', function () {
     return view('about-us');

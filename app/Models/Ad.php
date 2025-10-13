@@ -31,6 +31,7 @@ class Ad extends Model
         'last_reset_date',
         'impressions',
         'qr_scans',
+        'scheduled_date',
         // Approval fields
         'reviewed_by',
         'submitted_for_review_at',
@@ -58,6 +59,7 @@ class Ad extends Model
             'impressions' => 'integer',
             'qr_scans' => 'integer',
             'radius_miles' => 'decimal:2',
+            'scheduled_date' => 'date',
             // Approval field casts
             'submitted_for_review_at' => 'datetime',
             'reviewed_at' => 'datetime',
