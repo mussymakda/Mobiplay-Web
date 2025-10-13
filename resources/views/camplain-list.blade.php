@@ -51,7 +51,7 @@
             <nav>
               <div class="nav nav-tabs" id="nav-tab" role="tablist">
                 <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true"><img src="assets/images/audience.svg"> <span>{{ __('messages.published') }}</span></button>
-                <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false"><img src="assets/images/percent.svg"> <span>{{ __('messages.engagement') }}</span></button>
+                <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false"><img src="assets/images/edit.svg"> <span>Draft</span></button>
                 
               </div>
             </nav>
@@ -62,7 +62,7 @@
       <a href="{{ route('switchLang', 'en') }}" class="{{ app()->getLocale() == 'en' ? 'active' : '' }}"><img src="assets/images/us.svg" alt="English"> EN</a>
       <a href="{{ route('switchLang', 'es') }}" class="{{ app()->getLocale() == 'es' ? 'active' : '' }}"><img style="height: 25px; width: 25px;" class="auto" src="assets/images/mexico.png" alt="Español"> ES</a>
     </div>
-            <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span> <img src="assets/images/dash-profile.png"></a>
+            <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span> <img src="{{ Auth::user()->profile_image_url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"></a>
           </div>
         </div>
       </div>
@@ -89,25 +89,12 @@
             </div>
             <div class="col-xl-7 col-lg-7">
               <div class="row">
-                <div class="col-lg-4">
-                  <div class="form-group mb-lg-0 mb-3">
-                    <select class="form-select select-goal w-100">
-                      <option>Select Goal</option>
-                    </select>
-                    
-                  </div>
+                <div class="col-lg-8">
+                  <!-- Removed unused goal filters -->
                 </div>
                 <div class="col-lg-4">
                   <div class="form-group mb-lg-0 mb-3">
-                    <select class="form-select select-goal w-100">
-                      <option>Select Goal</option>
-                    </select>
-                   
-                  </div>
-                </div>
-                <div class="col-lg-4">
-                  <div class="form-group mb-lg-0 mb-3">
-                    <a href="#" class="camp-btn"><img src="assets/images/plus.svg"> New Campaigns</a>
+                    <a href="{{ route('campaign-wizard') }}" class="camp-btn"><img src="assets/images/plus.svg"> New Campaigns</a>
                   </div>
                 </div>
                 
@@ -152,156 +139,58 @@
                         <thead>
                           <tr>
                             <th scope="col">Campaign</th>
-                            <th scope="col">Goal</th>
                             <th scope="col">Schedule</th>
                             <th scope="col">Impressions</th>
-                            <th scope="col">CPM</th>
-                            <th scope="col">Total Spent</th>
+                            <th scope="col">Daily Budget</th>
+                            <th scope="col">Today Spent</th>
                             <th scope="col">Status</th>
                             <th scope="col"></th>
                           </tr>
                         </thead>
                         <tbody>
+                          @forelse($publishedCampaigns as $campaign)
                           <tr>
                             <td>
-                              <p>Eco Enlighten Drive</p>
-                              <span>#464545454</span>
+                              <p>{{ $campaign->campaign_name }}</p>
+                              <span>#{{ $campaign->id }}</span>
                             </td>
-                            <td>In-Person Visits</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td>45k</td>
-                            <td>456</td>
-                            <td>$450.66</td>
+                            <td>{{ $campaign->created_at->format('n-j-y') }} to {{ $campaign->status === 'active' ? 'Ongoing' : 'Paused' }}</td>
+                            <td>{{ number_format($campaign->impressions) }}</td>
+                            <td>${{ number_format($campaign->daily_budget ?? 0, 2) }}</td>
+                            <td>${{ number_format($campaign->daily_spent ?? 0, 2) }}</td>
                             <td>
-                              <a href="#" class="btn btn-success">Active</a>
+                              @if($campaign->status === 'active')
+                                <a href="#" class="btn btn-success">Active</a>
+                              @elseif($campaign->status === 'paused')
+                                <a href="#" class="btn btn-warning">Paused</a>
+                              @elseif($campaign->status === 'pending')
+                                <a href="#" class="btn btn-info">Pending</a>
+                              @else
+                                <a href="#" class="btn btn-secondary">{{ ucfirst($campaign->status) }}</a>
+                              @endif
                             </td>
                             <td>
                               <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
+                                <a href="{{ route('campaigns.edit', $campaign) }}" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
+                                @if($campaign->status === 'pending')
+                                <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}" class="d-inline">
+                                  @csrf
+                                  @method('DELETE')
+                                  <button type="submit" class="btn btn-link p-0" onclick="return confirm('Are you sure you want to delete this campaign?')">
+                                    <img src="assets/images/trash.svg">
+                                  </button>
+                                </form>
+                                @endif
                               </div>
                             </td>
                           </tr>
+                          @empty
                           <tr>
-                            <td>
-                              <p>WellPath Journey</p>
-                              <span>#464545454</span>
-                            </td>
-                            <td>Mobile Conversions</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td>45k</td>
-                            <td>456</td>
-                            <td>$450.66</td>
-                            <td>
-                              <a href="#" class="btn btn-warning">Pause</a>
-                            </td>
-                            <td>
-                              <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
-                              </div>
+                            <td style="border: 0;" colspan="8">
+                              <div class="empty-table"><p>No Active Campaigns Currently</p></div>
                             </td>
                           </tr>
-                          <tr>
-                            <td>
-                              <p>LearnLeap Program</p>
-                              <span>#464545454</span>
-                            </td>
-                            <td>In-Person Visits</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td>45k</td>
-                            <td>456</td>
-                            <td>$450.66</td>
-                            <td>
-                              <a href="#" class="btn btn-success">Active</a>
-                            </td>
-                            <td>
-                              <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <p>CommunityCanvas Event</p>
-                              <span>#464545454</span>
-                            </td>
-                            <td>In-Person Visits</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td>45k</td>
-                            <td>456</td>
-                            <td>$450.66</td>
-                            <td>
-                              <a href="#" class="btn btn-success">Active</a>
-                            </td>
-                            <td>
-                              <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <p>FundTheFuture Fest</p>
-                              <span>#464545454</span>
-                            </td>
-                            <td>Brand Awareness</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td>45k</td>
-                            <td>456</td>
-                            <td>$450.66</td>
-                            <td>
-                              <a href="#" class="btn btn-success">Active</a>
-                            </td>
-                            <td>
-                              <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <p>DreamDrive Benefit</p>
-                              <span>#464545454</span>
-                            </td>
-                            <td>In-Person Visits</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td>45k</td>
-                            <td>456</td>
-                            <td>$450.66</td>
-                            <td>
-                              <a href="#" class="btn btn-success">Active</a>
-                            </td>
-                            <td>
-                              <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <p>Innovate360</p>
-                              <span>#464545454</span>
-                            </td>
-                            <td>In-Person Visits</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td>45k</td>
-                            <td>456</td>
-                            <td>$450.66</td>
-                            <td>
-                              <a href="#" class="btn btn-success">Active</a>
-                            </td>
-                            <td>
-                              <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
-                              </div>
-                            </td>
-                          </tr>
+                          @endforelse
                           
                         </tbody>
                       </table>
@@ -343,95 +232,48 @@
                         <thead>
                           <tr>
                             <th scope="col">Campaign</th>
-                            <th scope="col">Goal</th>
                             <th scope="col">Schedule</th>
                             <th scope="col">Next Step</th>                            
                             <th scope="col"></th>
                           </tr>
                         </thead>
                         <tbody>
+                          @forelse($draftCampaigns as $campaign)
                           <tr>
                             <td>
-                              <p>Eco Enlighten Drive</p>
-                              <span>#464545454</span>
+                              <p>{{ $campaign->campaign_name }}</p>
+                              <span>#{{ $campaign->id }}</span>
                             </td>
-                            <td>Mobile Conversions</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td><a href="#" class="btn btn-grey">Review</a></td>
-                            
+                            <td>{{ $campaign->created_at->format('n-j-y') }}</td>
+                            <td>
+                              @if($campaign->status === 'draft')
+                                <a href="{{ route('campaigns.edit', $campaign) }}" class="btn btn-warning">Complete Campaign</a>
+                              @elseif($campaign->status === 'pending')
+                                <a href="#" class="btn btn-grey">Under Review</a>
+                              @elseif($campaign->status === 'rejected')
+                                <a href="{{ route('campaigns.edit', $campaign) }}" class="btn btn-grey">Needs Changes</a>
+                              @endif
+                            </td>
                             <td>
                               <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
+                                <a href="{{ route('campaigns.edit', $campaign) }}" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
+                                <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}" class="d-inline">
+                                  @csrf
+                                  @method('DELETE')
+                                  <button type="submit" class="btn btn-link p-0" onclick="return confirm('Are you sure you want to delete this campaign?')">
+                                    <img src="assets/images/trash.svg">
+                                  </button>
+                                </form>
                               </div>
                             </td>
                           </tr>
+                          @empty
                           <tr>
-                            <td>
-                              <p>WellPath Journey</p>
-                              <span>#464545454</span>
-                            </td>
-                            <td>In-Person Visits</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td><a href="#" class="btn btn-grey">Create ad</a></td>
-                            
-                            <td>
-                              <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
-                              </div>
+                            <td style="border: 0;" colspan="5">
+                              <div class="empty-table"><p>No Draft Campaigns Currently</p></div>
                             </td>
                           </tr>
-                          <tr>
-                            <td>
-                              <p>LearnLeap Program</p>
-                              <span>#464545454</span>
-                            </td>
-                            <td>In-Person Visits</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td><a href="#" class="btn btn-grey">Review</a></td>
-                            
-                            <td>
-                              <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <p>CommunityCanvas Event</p>
-                              <span>#464545454</span>
-                        </td>
-                            <td>In-Person Visits</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td><a href="#" class="btn btn-grey">Review</a></td>
-                            
-                            <td>
-                              <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <p>FundTheFuture Fest</p>
-                              <span>#464545454</span>
-                            </td>
-                            <td>In-Person Visits</td>
-                            <td>3-5-24 to 3-14-24</td>
-                            <td><a href="#" class="btn btn-grey">Review</a></td>
-                            
-                            <td>
-                              <div>
-                                <a href="#" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
-                                <a href="#" class=""><img src="assets/images/trash.svg"></a>
-                              </div>
-                            </td>
-                          </tr>
-                          
-                          
+                          @endforelse
                         </tbody>
                       </table>
                     </div>

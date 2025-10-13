@@ -1,4 +1,5 @@
 <?php
+
 return [
     'toggle_navigation' => 'Alternar navegación',
     'how_it_works' => 'Cómo funciona',
@@ -60,6 +61,9 @@ return [
     'car_model' => 'Modelo',
     'car_year' => 'Año del coche',
     'phone_number' => 'Número de teléfono',
+    'license_number' => 'Número de Licencia de Conducir',
+    'vehicle_type' => 'Tipo de Vehículo',
+    'vehicle_number' => 'Número de Registro del Vehículo',
     'apply_now' => 'Solicitar Ahora',
     'what_you_get' => 'Lo que obtienes',
     'free_media_device' => 'Dispositivo de medios y entretenimiento gratis para tus pasajeros',
@@ -73,7 +77,6 @@ proporcionan sin costo adicional.',
     'account_settings' => 'Configuración de la Cuenta',
     'payment_history' => 'Historial de Pagos',
     'settings' => 'Configuración',
-
 
     // Dashboard translations
     'control_panel' => 'Panel de Control',
@@ -135,5 +138,5 @@ proporcionan sin costo adicional.',
     'change_password' => 'Cambiar Contraseña',
     'faqs' => 'Preguntas Frecuentes',
     'close_account' => 'Cerrar mi Cuenta',
-    'no_offers_available' => 'No hay ofertas especiales disponibles en este momento. ¡Vuelve más tarde para ofertas emocionantes!'
+    'no_offers_available' => 'No hay ofertas especiales disponibles en este momento. ¡Vuelve más tarde para ofertas emocionantes!',
 ];

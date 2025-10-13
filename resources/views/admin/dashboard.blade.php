@@ -360,8 +360,8 @@
                   <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="content-left">
-                        <h5 class="mb-1">100</h5>
-                        <small>Active Advertisers</small>
+                        <h5 class="mb-1">{{ isset($stats) ? number_format($stats['totalUsers']) : '100' }}</h5>
+                        <small>Total Advertisers</small>
                       </div>
                       <span class="badge bg-label-primary rounded-circle p-2">
                         <i class="ti ti-user ti-lg"></i>
@@ -375,8 +375,8 @@
                   <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="content-left">
-                        <h5 class="mb-1">150</h5>
-                        <small>Active Drivers</small>
+                        <h5 class="mb-1">{{ isset($stats) ? number_format($stats['totalDrivers']) : '150' }}</h5>
+                        <small>Total Drivers ({{ isset($stats) ? number_format($stats['verifiedDrivers']) : '0' }} verified)</small>
                       </div>
                       <span class="badge bg-label-success rounded-circle p-2">
                         <i class="ti ti-car"></i>
@@ -390,8 +390,8 @@
                   <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="content-left">
-                        <h5 class="mb-1">50</h5>
-                        <small>Active campaigns</small>
+                        <h5 class="mb-1">{{ isset($stats) ? number_format($stats['activeAds']) : '50' }}</h5>
+                        <small>Active Ads</small>
                       </div>
                       <span class="badge bg-label-success rounded-circle p-2">
                         <i class="ti ti-calendar"></i>

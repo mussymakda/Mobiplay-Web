@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AdminResource\Pages;
-use App\Filament\Resources\AdminResource\RelationManagers;
 use App\Models\Admin;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -18,9 +17,9 @@ class AdminResource extends Resource
     protected static ?string $model = Admin::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
-    
-    protected static ?string $navigationGroup = 'User Management';
-    
+
+    protected static ?string $navigationGroup = 'Admin Management';
+
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
@@ -50,17 +49,37 @@ class AdminResource extends Resource
                             ->maxLength(255)
                             ->placeholder('Enter phone number'),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Access & Permissions')
                     ->schema([
-                        Forms\Components\Select::make('role')
+                        Forms\Components\Select::make('role_id')
+                            ->label('Role')
+                            ->relationship('adminRole', 'display_name')
+                            ->searchable()
+                            ->preload()
                             ->required()
+                            ->helperText('Select the role for this admin')
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->unique()
+                                    ->rules(['alpha_dash']),
+                                Forms\Components\TextInput::make('display_name')
+                                    ->required(),
+                                Forms\Components\Textarea::make('description'),
+                                Forms\Components\Toggle::make('is_active')
+                                    ->default(true),
+                            ]),
+
+                        Forms\Components\Select::make('role')
+                            ->label('Legacy Role (deprecated)')
                             ->options([
                                 'admin' => 'Admin',
                                 'super_admin' => 'Super Admin',
                                 'moderator' => 'Moderator',
                             ])
-                            ->default('admin'),
+                            ->disabled()
+                            ->helperText('This field is deprecated. Use Role field above.'),
                         Forms\Components\Toggle::make('is_active')
                             ->required()
                             ->default(true)
@@ -98,14 +117,25 @@ class AdminResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set')
                     ->limit(15),
-                Tables\Columns\TextColumn::make('role')
+                Tables\Columns\TextColumn::make('adminRole.display_name')
+                    ->label('Role')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'super_admin' => 'success',
-                        'moderator' => 'warning',
+                    ->color(fn (?string $state): string => match ($state) {
+                        'Super Administrator' => 'danger',
+                        'Administrator' => 'success',
+                        'Content Moderator' => 'warning',
+                        'Content Manager' => 'info',
+                        'Support Agent' => 'gray',
                         default => 'primary',
                     })
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('No role assigned'),
+
+                Tables\Columns\TextColumn::make('role')
+                    ->label('Legacy Role')
+                    ->badge()
+                    ->color('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()
@@ -164,10 +194,10 @@ class AdminResource extends Resource
                     Tables\Actions\ForceDeleteAction::make(),
                     Tables\Actions\RestoreAction::make(),
                 ])->label('Actions')
-                ->icon('heroicon-m-ellipsis-vertical')
-                ->size('sm')
-                ->color('gray')
-                ->button(),
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

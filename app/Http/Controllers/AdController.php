@@ -3,28 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ad;
-use App\Models\Advert;
 use Illuminate\Http\JsonResponse;
 
 class AdController extends Controller
 {
     public function getAds(): JsonResponse
     {
-        // Fetch all ads from the database
-        $ads = Advert::all()->map(function ($ad) {
-            // Return the ad data without generating QR codes
+        // Fetch all active ads from the database
+        $ads = Ad::where('status', Ad::STATUS_ACTIVE)->get()->map(function ($ad) {
+            // Return the ad data mapped to correct model fields
             return [
                 'id' => $ad->id,
-                'name' => $ad->name,
-                'type' => $ad->type,
-                'media' => $ad->media,
-                'cta' => $ad->cta, // Include the CTA link
-                'url' => $ad->url,
+                'campaign_name' => $ad->campaign_name,
+                'media_type' => $ad->media_type,
+                'media_path' => $ad->media_path,
+                'cta_url' => $ad->cta_url,
+                'qr_code_url' => $ad->qr_code_url,
                 'latitude' => $ad->latitude,
                 'longitude' => $ad->longitude,
-                'radius' => $ad->radius,
-                'priority' => $ad->priority,
-                'adspend' => $ad->adspend,
+                'location_name' => $ad->location_name,
+                'radius_miles' => $ad->radius_miles,
+                'status' => $ad->status,
+                'budget' => $ad->budget,
                 'user_id' => $ad->user_id,
                 'created_at' => $ad->created_at,
                 'updated_at' => $ad->updated_at,

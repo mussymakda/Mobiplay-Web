@@ -1,4 +1,5 @@
 <?php
+
 return [
     'toggle_navigation' => 'Toggle navigation',
     'how_it_works' => 'How it Works',
@@ -62,6 +63,9 @@ return [
     'car_model' => 'Model',
     'car_year' => 'Year of Car',
     'phone_number' => 'Phone Number',
+    'license_number' => 'Driver License Number',
+    'vehicle_type' => 'Vehicle Type',
+    'vehicle_number' => 'Vehicle Registration Number',
     'apply_now' => 'Apply Now',
     'what_you_get' => 'What you get',
     'free_media_device' => 'Free media and entertainment device for your passengers',
@@ -74,7 +78,6 @@ return [
     'account_settings' => 'Account Settings',
     'payment_history' => 'Payment History',
     'settings' => 'Settings',
-
 
     // Dashboard translations
     'control_panel' => 'Control Panel',
@@ -93,8 +96,6 @@ return [
     'active_campaigns' => 'Active Campaigns',
     'create_campaigns_desc' => 'Create campaigns now and compete with the competition.',
 
-
-    
     // Analytics translations
     'analytics' => 'Analytics',
     'published' => 'Published',
@@ -137,5 +138,5 @@ return [
     'change_password' => 'Change Password',
     'faqs' => 'FAQ\'s',
     'close_account' => 'Close my Account',
-    'no_offers_available' => 'No special offers available at the moment. Check back later for exciting deals!'
+    'no_offers_available' => 'No special offers available at the moment. Check back later for exciting deals!',
 ];

@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ad;
+use App\Models\Admin;
+use App\Models\Driver;
+use App\Models\Payment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Admin;
 use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
@@ -28,9 +32,10 @@ class AdminController extends Controller
         ]);
 
         $admin = Admin::where('email', $request->email)->first();
-        
+
         if ($admin && Hash::check($request->password, $admin->password)) {
             Auth::guard('admin')->login($admin);
+
             return redirect()->route('admin.dashboard');
         }
 
@@ -44,11 +49,23 @@ class AdminController extends Controller
         Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('admin.login');
     }
 
     public function dashboard()
     {
-        return view('admin.dashboard');
+        // Get dynamic counts for dashboard
+        $stats = [
+            'totalUsers' => User::count(),
+            'totalDrivers' => Driver::count(),
+            'activeTablets' => Driver::where('is_active', true)->count(),
+            'activeAds' => Ad::where('status', Ad::STATUS_ACTIVE)->count(),
+            'totalRevenue' => Payment::where('type', Payment::TYPE_DEPOSIT)
+                ->where('status', Payment::STATUS_COMPLETED)
+                ->sum('amount'),
+        ];
+
+        return view('admin.dashboard', compact('stats'));
     }
 }

@@ -11,7 +11,7 @@
     </div>
                   <a href="#" class="profile-name">
                       <span>{{ Auth::user()->name }}</span>
-                      <img src="{{ asset('assets/images/dash-profile.png') }}">
+                      <img src="{{ Auth::user()->profile_image_url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
                   </a>
                   <!-- Logout Button -->
                   <form action="{{ route('logout') }}" method="POST" style="display: inline;">

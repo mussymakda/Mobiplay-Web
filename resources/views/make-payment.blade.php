@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="en">
 
-<head>
+<h                            <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span><img
+                                src="{{ Auth::user()->profile_image_url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" alt="Profile"></a>d>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -38,7 +39,7 @@
                             <a href="#" class=""><img src="assets/images/spain.svg" alt="ES"> ES</a>
                         </div>
                         <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span><img
-                                src="assets/images/dark-dash-profile.png" alt="Profile"></a>
+                                src="{{ Auth::user()->profile_image_url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" alt="Profile"></a>
                     </div>
                 </div>
             </div>

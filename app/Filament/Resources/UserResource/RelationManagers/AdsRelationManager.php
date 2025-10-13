@@ -9,7 +9,6 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AdsRelationManager extends RelationManager
 {
@@ -37,7 +36,8 @@ class AdsRelationManager extends RelationManager
                     ->searchable()
                     ->preload()
                     ->required(),
-                Forms\Components\TextInput::make('budget')
+                Forms\Components\TextInput::make('daily_budget')
+                    ->label('Daily Budget')
                     ->required()
                     ->numeric()
                     ->prefix('$'),
@@ -70,10 +70,12 @@ class AdsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('package.name')
                     ->label('Package')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('budget')
+                Tables\Columns\TextColumn::make('daily_budget')
+                    ->label('Daily Budget')
                     ->money('USD')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('spent')
+                Tables\Columns\TextColumn::make('daily_spent')
+                    ->label('Today Spent')
                     ->money('USD')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('impressions')

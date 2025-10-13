@@ -1,21 +1,20 @@
 <?php
-use App\Http\Controllers\DriverController;
-use App\Http\Controllers\EditProfileController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\SettingsController;
-use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\RegistrationController;
-use App\Http\Controllers\PaymentController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\DriverRegistrationController;
+use App\Http\Controllers\EditProfileController;
 use App\Http\Controllers\LocalizationController;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\SettingsController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-
-
-
-
+use Illuminate\Support\Facades\Route;
 
 // Command Routes (consider restricting access)
 Route::get('command:clear', function () {
@@ -23,27 +22,32 @@ Route::get('command:clear', function () {
     Artisan::call('optimize:clear');
     Artisan::call('view:clear');
     Artisan::call('config:cache');
-    return "config, cache, and view cleared successfully";
+
+    return 'config, cache, and view cleared successfully';
 });
 
 Route::get('command:config', function () {
     Artisan::call('config:cache');
-    return "config cache successfully";
+
+    return 'config cache successfully';
 });
 
 Route::get('command:key', function () {
     Artisan::call('key:generate');
-    return "Key generated successfully";
+
+    return 'Key generated successfully';
 });
 
 Route::get('command:migrate', function () {
     Artisan::call('migrate');
-    return "Database migration completed";
+
+    return 'Database migration completed';
 });
 
 Route::get('command:migrate_refresh', function () {
     Artisan::call('migrate:refresh');
-    return "Database migration refreshed";
+
+    return 'Database migration refreshed';
 });
 
 Route::get('/', function () {
@@ -52,15 +56,26 @@ Route::get('/', function () {
 
 Route::get('/stripe/balance', [PaymentController::class, 'getBalance'])->name('stripe.balance');
 
-
 Route::get('/driver', function () {
     return view('landing.driver'); // Show landing page instead of redirecting to login
 })->name('driver');
+
+// Driver Registration Routes (Quick Onboarding Only)
+Route::prefix('driver')->name('driver.')->group(function () {
+    Route::get('/register', [DriverRegistrationController::class, 'showRegistrationForm'])
+        ->name('register');
+    Route::post('/register', [DriverRegistrationController::class, 'register'])
+        ->name('register.store');
+
+    // Document upload and verification routes removed for quick onboarding
+    // Admin can handle verification manually through Filament panel
+});
 // Move login redirection to a separate route
 Route::get('/login', function () {
     if (Auth::check()) {
         return redirect('/dashboard');
     }
+
     return app(AuthController::class)->index();
 })->name('login');
 
@@ -78,7 +93,7 @@ Route::get('/dashboard', function () {
         ->where('valid_until', '>=', now())
         ->orderBy('created_at', 'desc')
         ->get();
-    
+
     return view('dashboard', compact('offers'));
 })->middleware('auth')->name('dashboard');
 
@@ -86,9 +101,7 @@ Route::get('/dashboard', function () {
 //     return view('campaign-wizard');
 // })->middleware('auth')->name('campaign-wizard');
 
-Route::get('/campaign-wizard', function () {
-    return view('campaign-wizard');
-})->name('campaign-wizard');
+Route::get('/campaign-wizard', [CampaignController::class, 'create'])->middleware('auth')->name('campaign-wizard');
 
 // Signup Routes
 Route::get('/signup', [AuthController::class, 'showSignupForm'])->name('signup');
@@ -113,7 +126,7 @@ Route::post('/signup/account', [RegistrationController::class, 'handleAccount'])
 Route::get('/make-payment', [PaymentController::class, 'showMakePaymentForm'])->middleware('auth')->name('payment.make');
 Route::post('/stripe', [PaymentController::class, 'session'])->name('payment.process');
 
-//Stripe
+// Stripe
 // Route for creating metered payment (for subscriptions)
 // Route::post('/create-metered-payment', [PaymentController::class, 'createMeteredSubscription']);
 
@@ -123,8 +136,9 @@ Route::post('stripe/test-webhook', function (Request $request) {
     Log::info('Test webhook hit', [
         'method' => $request->method(),
         'headers' => $request->headers->all(),
-        'body' => $request->all()
+        'body' => $request->all(),
     ]);
+
     return response()->json(['status' => 'received']);
 });
 
@@ -159,9 +173,8 @@ Route::get('/payments', [PaymentController::class, 'index'])->middleware('auth')
 Route::post('/create-metered-payment', [PaymentController::class, 'createMeteredPayment']);
 
 Route::get('/switch-lang/{locale}', [LocalizationController::class, 'switch'])
-    ->name('switchLang'); 
+    ->name('switchLang');
 
-    
 Route::get('/settings', [SettingsController::class, 'show'])->middleware('auth')->name('settings');
 
 Route::post('/webhook/stripe', [PaymentController::class, 'handleStripeWebhook']);
@@ -184,13 +197,25 @@ Route::get('password', function () {
     return view('password');
 })->middleware('auth')->name('password');
 
-Route::get('analytics', function () {
-    return view('analytics');
-})->middleware('auth')->name('analytics');
+Route::get('analytics', [AnalyticsController::class, 'index'])->middleware('auth')->name('analytics');
 
-Route::get('camplain-list', function () {
-    return view('camplain-list');
-})->middleware('auth')->name('camplain-list');
+// Campaign routes
+Route::middleware('auth')->group(function () {
+    Route::get('camplain-list', [CampaignController::class, 'index'])->name('camplain-list');
+    Route::get('campaigns', [CampaignController::class, 'index'])->name('campaigns.index');
+    Route::get('campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
+    Route::post('campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
+    Route::post('campaigns/save-draft', [CampaignController::class, 'saveDraft'])->name('campaigns.saveDraft');
+    Route::get('campaigns/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
+    Route::get('campaigns/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaigns.edit');
+    Route::put('campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaigns.update');
+    Route::patch('campaigns/{campaign}/pause', [CampaignController::class, 'pause'])->name('campaigns.pause');
+    Route::patch('campaigns/{campaign}/resume', [CampaignController::class, 'resume'])->name('campaigns.resume');
+    Route::delete('campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
+
+    // API endpoint for nearby drivers
+    Route::get('api/campaigns/nearby-drivers', [CampaignController::class, 'getNearbyDrivers'])->name('campaigns.nearby-drivers');
+});
 
 Route::get('about-us', function () {
     return view('about-us');

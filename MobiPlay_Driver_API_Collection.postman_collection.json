@@ -1,0 +1,856 @@
+{
+	"info": {
+		"_postman_id": "mobiplay-driver-api-collection",
+		"name": "MobiPlay Driver API Collection",
+		"description": "Complete API documentation for MobiPlay Driver App - Location-based Ad Serving Platform",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "mobiplay-api"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Driver Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.success && response.data.token) {",
+									"        pm.environment.set('auth_token', response.data.token);",
+									"        console.log('Token saved:', response.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"testdriver@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/driver/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"driver",
+								"login"
+							]
+						},
+						"description": "Authenticate driver and receive Bearer token for subsequent API calls.\n\n**Request Body:**\n- `email` (string, required): Driver's email address\n- `password` (string, required): Driver's password (min 6 characters)\n\n**Response:**\n- `success` (boolean): Operation status\n- `message` (string): Response message\n- `data.driver` (object): Driver information\n- `data.token` (string): Bearer token for authentication\n\n**Test Credentials:**\n- Email: testdriver@example.com\n- Password: password123"
+					},
+					"response": [
+						{
+							"name": "Successful Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"testdriver@example.com\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/driver/login",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"driver",
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Login successful\",\n    \"data\": {\n        \"driver\": {\n            \"id\": 1,\n            \"name\": \"Test Driver\",\n            \"email\": \"testdriver@example.com\",\n            \"status\": \"online\",\n            \"total_earnings\": \"0.00\",\n            \"unpaid_amount\": \"0.00\"\n        },\n        \"token\": \"1|5ijVwgj72o8osmP6sWym9mqLatyKEsgjqC2Y5qzkf4a2b6ca\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Driver Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/driver/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"driver",
+								"logout"
+							]
+						},
+						"description": "Logout driver and revoke the current authentication token.\n\n**Headers Required:**\n- `Authorization: Bearer {token}`\n\n**Response:**\n- `success` (boolean): Operation status\n- `message` (string): Logout confirmation"
+					},
+					"response": []
+				}
+			],
+			"description": "Driver authentication endpoints for login/logout functionality"
+		},
+		{
+			"name": "Driver Profile",
+			"item": [
+				{
+					"name": "Get Driver Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/driver/profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"driver",
+								"profile"
+							]
+						},
+						"description": "Retrieve complete driver profile information including location and earnings.\n\n**Headers Required:**\n- `Authorization: Bearer {token}`\n\n**Response Data:**\n- `id` (integer): Driver ID\n- `name` (string): Driver name\n- `email` (string): Driver email\n- `phone` (string): Phone number\n- `license_number` (string): Driver's license number\n- `vehicle_number` (string): Vehicle registration number\n- `vehicle_type` (string): Type of vehicle\n- `status` (string): Current status (online/offline/busy)\n- `current_location` (object): GPS coordinates and last update\n- `earnings` (object): Total and unpaid earnings"
+					},
+					"response": [
+						{
+							"name": "Driver Profile Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/driver/profile",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"driver",
+										"profile"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Profile retrieved successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Test Driver\",\n        \"email\": \"testdriver@example.com\",\n        \"phone\": \"+1234567890\",\n        \"license_number\": \"DL123456789\",\n        \"vehicle_number\": \"ABC1234\",\n        \"vehicle_type\": \"car\",\n        \"status\": \"online\",\n        \"current_location\": {\n            \"latitude\": 40.7128,\n            \"longitude\": -74.0060,\n            \"last_update\": \"2025-10-01T14:35:00.000000Z\"\n        },\n        \"earnings\": {\n            \"total\": \"0.00\",\n            \"unpaid\": \"0.00\"\n        }\n    }\n}"
+						}
+					]
+				}
+			],
+			"description": "Driver profile management endpoints"
+		},
+		{
+			"name": "Ad Serving System",
+			"item": [
+				{
+					"name": "Request Location-based Ads",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"latitude\": 40.7128,\n    \"longitude\": -74.0060\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/driver/ads/request",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"driver",
+								"ads",
+								"request"
+							]
+						},
+						"description": "Request ads based on driver's current GPS location using smart targeting algorithm.\n\n**Headers Required:**\n- `Authorization: Bearer {token}`\n\n**Request Body:**\n- `latitude` (number, required): Driver's current latitude (-90 to 90)\n- `longitude` (number, required): Driver's current longitude (-180 to 180)\n\n**Algorithm Features:**\n- Geographic radius-based filtering\n- Package priority sorting\n- Anti-spam filtering\n- Budget availability checking\n- Distance calculations using Haversine formula\n\n**Response Data:**\n- `ads` (array): Array of formatted ads for display\n- `total_available` (integer): Total ads available in location\n- `location` (object): Confirmed driver location\n\n**Ad Object Structure:**\n- `id` (integer): Ad ID for impression tracking\n- `campaign_name` (string): Campaign name\n- `media` (object): Image/video URL and type\n- `qr_code` (object): QR code URL, position, and redirect URL\n- `location` (object): Ad location and radius\n- `display_duration` (integer): Recommended display time in seconds\n- `package_priority` (integer): Priority level for sorting"
+					},
+					"response": [
+						{
+							"name": "Ads Found Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"latitude\": 40.7128,\n    \"longitude\": -74.0060\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/driver/ads/request",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"driver",
+										"ads",
+										"request"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Ads retrieved successfully\",\n    \"data\": {\n        \"ads\": [\n            {\n                \"id\": 1,\n                \"campaign_name\": \"Test Local Restaurant\",\n                \"media\": {\n                    \"type\": \"image\",\n                    \"url\": \"http://127.0.0.1:8000/storage/test/restaurant-ad.jpg\"\n                },\n                \"qr_code\": {\n                    \"url\": \"https://restaurant.example.com/menu\",\n                    \"position\": \"top-right\",\n                    \"redirect_url\": \"http://127.0.0.1:8000/api/qr/MXxodHRwczovL3Jlc3RhdXJhbnQuZXhhbXBsZS5jb20vbWVudQ==\"\n                },\n                \"location\": {\n                    \"latitude\": 40.7580,\n                    \"longitude\": -73.9855,\n                    \"location_name\": \"Times Square Area\",\n                    \"radius_miles\": 5.0\n                },\n                \"display_duration\": 30,\n                \"package_priority\": 1\n            }\n        ],\n        \"total_available\": 1,\n        \"location\": {\n            \"latitude\": 40.7128,\n            \"longitude\": -74.0060\n        }\n    }\n}"
+						},
+						{
+							"name": "No Ads Available",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"latitude\": 0.0,\n    \"longitude\": 0.0\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/driver/ads/request",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"driver",
+										"ads",
+										"request"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"No ads available for your current location\",\n    \"data\": {\n        \"ads\": [],\n        \"message\": \"Move to a different area or check back later\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Record Ad Impression",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"display\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/driver/ads/1/impression",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"driver",
+								"ads",
+								"1",
+								"impression"
+							]
+						},
+						"description": "Record an ad impression (display or QR scan) and calculate driver earnings.\n\n**Headers Required:**\n- `Authorization: Bearer {token}`\n\n**URL Parameters:**\n- `ad` (integer): ID of the ad being tracked (from ads/request response)\n\n**Request Body:**\n- `type` (string, required): Impression type - either \"display\" or \"qr_scan\"\n\n**Impression Types:**\n- `display`: Ad was shown on screen (lower payout rate)\n- `qr_scan`: User scanned QR code (higher payout rate)\n\n**Response Data:**\n- `earnings` (object): Detailed earnings information\n- `ad_id` (integer): Confirmed ad ID\n- `type` (string): Confirmed impression type\n\n**Earnings Calculation:**\n- Different rates for display vs QR scan impressions\n- Rates defined in package configuration\n- Automatic driver earnings update\n- Budget deduction from advertiser account"
+					},
+					"response": [
+						{
+							"name": "Display Impression Recorded",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"type\": \"display\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/driver/ads/1/impression",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"driver",
+										"ads",
+										"1",
+										"impression"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Impression recorded successfully\",\n    \"data\": {\n        \"earnings\": {\n            \"impression_id\": 1,\n            \"earnings_added\": \"0.50\",\n            \"total_earnings\": \"0.50\",\n            \"unpaid_amount\": \"0.50\"\n        },\n        \"ad_id\": 1,\n        \"type\": \"display\"\n    }\n}"
+						},
+						{
+							"name": "QR Scan Impression Recorded",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"type\": \"qr_scan\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/driver/ads/1/impression",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"driver",
+										"ads",
+										"1",
+										"impression"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Impression recorded successfully\",\n    \"data\": {\n        \"earnings\": {\n            \"impression_id\": 2,\n            \"earnings_added\": \"2.00\",\n            \"total_earnings\": \"2.50\",\n            \"unpaid_amount\": \"2.50\"\n        },\n        \"ad_id\": 1,\n        \"type\": \"qr_scan\"\n    }\n}"
+						}
+					]
+				}
+			],
+			"description": "Location-based ad serving and impression tracking system"
+		},
+		{
+			"name": "Driver Earnings",
+			"item": [
+				{
+					"name": "Get Earnings Summary",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/driver/earnings/summary",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"driver",
+								"earnings",
+								"summary"
+							]
+						},
+						"description": "Get comprehensive earnings summary with time-based breakdowns and statistics.\n\n**Headers Required:**\n- `Authorization: Bearer {token}`\n\n**Response Data:**\n- `earnings` (object): Financial summary\n  - `total_earnings`: All-time earnings\n  - `unpaid_amount`: Pending payout amount\n  - `today`: Today's earnings\n  - `this_week`: Current week earnings\n  - `this_month`: Current month earnings\n- `statistics` (object): Performance metrics\n  - `total_impressions`: Total ad views\n  - `qr_scans`: Total QR code scans\n\n**Use Cases:**\n- Dashboard summary display\n- Performance tracking\n- Payout calculations\n- Driver motivation metrics"
+					},
+					"response": [
+						{
+							"name": "Earnings Summary Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/driver/earnings/summary",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"driver",
+										"earnings",
+										"summary"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Earnings summary retrieved\",\n    \"data\": {\n        \"earnings\": {\n            \"total_earnings\": \"125.50\",\n            \"unpaid_amount\": \"45.75\",\n            \"today\": \"12.00\",\n            \"this_week\": \"67.25\",\n            \"this_month\": \"125.50\"\n        },\n        \"statistics\": {\n            \"total_impressions\": 89,\n            \"qr_scans\": 15\n        }\n    }\n}"
+						}
+					]
+				}
+			],
+			"description": "Driver earnings and payout management endpoints"
+		},
+		{
+			"name": "Location Management",
+			"item": [
+				{
+					"name": "Update Driver Location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"latitude\": 40.7128,\n    \"longitude\": -74.0060,\n    \"accuracy\": 5.0,\n    \"speed\": 25.5,\n    \"heading\": 180.0\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/driver/location/update",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"driver",
+								"location",
+								"update"
+							]
+						},
+						"description": "Update driver's current location with enhanced GPS data for real-time tracking.\n\n**Headers Required:**\n- `Authorization: Bearer {token}`\n- `Content-Type: application/json`\n\n**Request Body:**\n- `latitude` (number, required): GPS latitude (-90 to 90)\n- `longitude` (number, required): GPS longitude (-180 to 180)\n- `accuracy` (number, optional): GPS accuracy in meters\n- `speed` (number, optional): Current speed in km/h\n- `heading` (number, optional): Direction heading (0-359 degrees)\n\n**Response:**\n- `location` (object): Updated location data\n- `analytics` (object): Movement analytics if available\n\n**Use Cases:**\n- Real-time driver tracking\n- Movement analytics\n- Route optimization\n- Performance monitoring"
+					},
+					"response": [
+						{
+							"name": "Location Updated Successfully",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"latitude\": 40.7128,\n    \"longitude\": -74.0060,\n    \"accuracy\": 5.0,\n    \"speed\": 25.5,\n    \"heading\": 180.0\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/driver/location/update",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"driver",
+										"location",
+										"update"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Location updated successfully\",\n    \"data\": {\n        \"location\": {\n            \"latitude\": 40.7128,\n            \"longitude\": -74.0060,\n            \"updated_at\": \"2024-01-15T10:30:00.000000Z\"\n        },\n        \"analytics\": {\n            \"distance_traveled\": 1.25,\n            \"average_speed\": 22.3\n        }\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Location History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/driver/location/history?limit=50&date_from=2024-01-01&date_to=2024-01-31",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"driver",
+								"location",
+								"history"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Number of records (1-100, default: 50)"
+								},
+								{
+									"key": "date_from",
+									"value": "2024-01-01",
+									"description": "Start date filter (YYYY-MM-DD)"
+								},
+								{
+									"key": "date_to",
+									"value": "2024-01-31",
+									"description": "End date filter (YYYY-MM-DD)"
+								}
+							]
+						},
+						"description": "Retrieve driver's location history with filtering options.\n\n**Headers Required:**\n- `Authorization: Bearer {token}`\n\n**Query Parameters:**\n- `limit` (integer, optional): Records to return (1-100, default: 50)\n- `date_from` (date, optional): Start date filter (YYYY-MM-DD)\n- `date_to` (date, optional): End date filter (YYYY-MM-DD)\n\n**Response:**\n- `locations` (array): Location history records\n  - Each record contains GPS data, timestamps, and context\n- `total_locations` (integer): Number of records returned\n- `period` (object): Filter period used\n\n**Use Cases:**\n- Route tracking and analysis\n- Performance review\n- Historical movement patterns\n- Compliance and monitoring"
+					},
+					"response": [
+						{
+							"name": "Location History Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/driver/location/history?limit=5",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"driver",
+										"location",
+										"history"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "5"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Location history retrieved successfully\",\n    \"data\": {\n        \"locations\": [\n            {\n                \"latitude\": 40.7128,\n                \"longitude\": -74.0060,\n                \"accuracy\": 5.0,\n                \"speed\": 25.5,\n                \"heading\": 180.0,\n                \"context\": \"location_update\",\n                \"distance_traveled\": \"1.25 km\",\n                \"timestamp\": \"2024-01-15T10:30:00.000000Z\"\n            },\n            {\n                \"latitude\": 40.7589,\n                \"longitude\": -73.9851,\n                \"accuracy\": 8.0,\n                \"speed\": 15.2,\n                \"heading\": 90.0,\n                \"context\": \"ad_request\",\n                \"distance_traveled\": \"0.75 km\",\n                \"timestamp\": \"2024-01-15T10:15:00.000000Z\"\n            }\n        ],\n        \"total_locations\": 2,\n        \"period\": {\n            \"from\": \"all\",\n            \"to\": \"now\"\n        }\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Movement Analytics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/driver/location/analytics?period=today",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"driver",
+								"location",
+								"analytics"
+							],
+							"query": [
+								{
+									"key": "period",
+									"value": "today",
+									"description": "Time period: today, week, month, custom"
+								},
+								{
+									"key": "date_from",
+									"value": "",
+									"description": "Custom period start (required if period=custom)",
+									"disabled": true
+								},
+								{
+									"key": "date_to",
+									"value": "",
+									"description": "Custom period end (required if period=custom)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get comprehensive movement analytics and driving statistics.\n\n**Headers Required:**\n- `Authorization: Bearer {token}`\n\n**Query Parameters:**\n- `period` (string, optional): Time period (today, week, month, custom)\n- `date_from` (date, required if custom): Custom start date\n- `date_to` (date, required if custom): Custom end date\n\n**Response:**\n- `analytics` (object): Comprehensive movement data\n  - `total_distance`: Total distance traveled\n  - `average_speed`: Average driving speed\n  - `active_time`: Total active driving time\n  - `location_updates`: Number of location updates\n  - `suspicious_activities`: Any flagged movements\n\n**Use Cases:**\n- Performance dashboards\n- Driver behavior analysis\n- Efficiency metrics\n- Safety monitoring"
+					},
+					"response": [
+						{
+							"name": "Movement Analytics Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/driver/location/analytics?period=today",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"driver",
+										"location",
+										"analytics"
+									],
+									"query": [
+										{
+											"key": "period",
+											"value": "today"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Movement analytics retrieved successfully\",\n    \"data\": {\n        \"analytics\": {\n            \"total_distance\": 45.8,\n            \"average_speed\": 28.5,\n            \"max_speed\": 65.0,\n            \"active_time\": \"4h 32m\",\n            \"location_updates\": 127,\n            \"distance_by_context\": {\n                \"ad_request\": 32.1,\n                \"location_update\": 13.7\n            },\n            \"suspicious_activities\": 0,\n            \"efficiency_score\": 8.7\n        },\n        \"period\": \"today\"\n    }\n}"
+						}
+					]
+				}
+			],
+			"description": "Advanced location tracking and movement analytics for drivers"
+		},
+		{
+			"name": "QR Code Tracking",
+			"item": [
+				{
+					"name": "QR Code Redirect & Track",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/qr/MXxodHRwczovL3Jlc3RhdXJhbnQuZXhhbXBsZS5jb20vbWVudQ==",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"qr",
+								"MXxodHRwczovL3Jlc3RhdXJhbnQuZXhhbXBsZS5jb20vbWVudQ=="
+							]
+						},
+						"description": "QR code redirect endpoint with automatic scan tracking.\n\n**URL Parameters:**\n- `qr_code` (string): Base64 encoded QR data containing ad ID and original URL\n\n**Functionality:**\n- Decodes QR code data\n- Identifies the source ad and displaying driver\n- Records QR scan impression automatically\n- Calculates driver earnings for the scan\n- Returns original URL for redirection\n\n**QR Code Format:**\n- Data: `{ad_id}|{original_url}`\n- Encoded: Base64 encoding of the data\n- Example: Ad ID 1 + URL \"https://restaurant.example.com/menu\"\n\n**Response:**\n- `success` (boolean): Operation status\n- `message` (string): Tracking confirmation\n- `redirect_url` (string): Original destination URL\n\n**Use in Flutter:**\n1. Display QR code from ads/request response\n2. User scans QR code\n3. App opens this URL to track the scan\n4. App redirects to the final destination\n5. Driver automatically earns money for the scan"
+					},
+					"response": [
+						{
+							"name": "QR Redirect Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/qr/MXxodHRwczovL3Jlc3RhdXJhbnQuZXhhbXBsZS5jb20vbWVudQ==",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"qr",
+										"MXxodHRwczovL3Jlc3RhdXJhbnQuZXhhbXBsZS5jb20vbWVudQ=="
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"QR scan recorded\",\n    \"redirect_url\": \"https://restaurant.example.com/menu\"\n}"
+						}
+					]
+				}
+			],
+			"description": "QR code tracking system for measuring ad engagement"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://10.0.2.2:8000/api",
+			"type": "string",
+			"description": "Android Emulator URL (use 10.0.2.2 for emulator, 127.0.0.1 for local testing)"
+		},
+		{
+			"key": "base_url_local",
+			"value": "http://127.0.0.1:8000/api",
+			"type": "string",
+			"description": "Local testing URL"
+		},
+		{
+			"key": "base_url_network",
+			"value": "http://YOUR_COMPUTER_IP:8000/api",
+			"type": "string",
+			"description": "Network URL - replace YOUR_COMPUTER_IP with your actual computer's IP address"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

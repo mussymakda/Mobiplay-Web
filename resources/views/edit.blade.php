@@ -18,8 +18,8 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
-    <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
-    <link rel="stylesheet" type="text/css" href="assets/css/responsive.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/stylesheet.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/responsive.css') }}">
 </head>
 
 <body class="inner-page">
@@ -66,7 +66,7 @@
       <a href="{{ route('switchLang', 'es') }}" class="{{ app()->getLocale() == 'es' ? 'active' : '' }}"><img style="height: 25px; width: 25px;" class="auto" src="assets/images/mexico.png" alt="Español"> ES</a>
     </div>
                             <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span> <img
-                                    src="assets/images/dash-profile.png"></a>
+                                    src="{{ Auth::user()->profile_image_url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"></a>
                         </div>
                     </div>
                 </div>
@@ -172,12 +172,12 @@
                                                 </div>
                                                 <div class="col-lg-12">
                                                     <label>{{ __('messages.phone_number') }}</label>
-                                                    <input type="text" class="form-control" name="phone"
+                                                    <input type="text" class="form-control" name="phone_number"
                                                         value="{{ old('phone_number', $phone_number) }}">
                                                 </div>
                                                 <div class="col-lg-12">
                                                     <div class="form-group text-end mt-3">
-                                                        <a href="#" class="btn btn-outline-primary me-2">{{ __('messages.cancel') }}</a>
+                                                        <a href="{{ route('profile') }}" class="btn btn-outline-primary me-2">{{ __('messages.cancel') }}</a>
                                                         <button type="submit" class="btn btn-primary">{{ __('messages.save') }}</button>
                                                     </div>
                                                 </div>
@@ -200,7 +200,7 @@
     </script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-    <script type="text/javascript" src="assets/js/script.js"></script>
+    <script type="text/javascript" src="{{ asset('assets/js/script.js') }}"></script>
 </body>
 
 </html>

@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\Offer;
 use App\Models\Payment;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DepositService
 {
@@ -30,10 +31,10 @@ class DepositService
 
             // Check for applicable offers
             $offer = $this->findApplicableOffer($user, $amount);
-            
+
             if ($offer) {
                 $bonusAmount = $this->calculateBonus($offer, $amount);
-                
+
                 if ($bonusAmount > 0) {
                     // Update the payment with offer details
                     $payment->update([
@@ -86,18 +87,18 @@ class DepositService
     protected function findApplicableOffer(User $user, float $amount): ?Offer
     {
         $now = Carbon::now();
-        
+
         // Get all active offers that the user is eligible for
         $offers = Offer::where('is_active', true)
             ->where('valid_from', '<=', $now)
             ->where('valid_until', '>=', $now)
             ->where(function ($query) use ($amount) {
                 $query->whereNull('minimum_deposit')
-                      ->orWhere('minimum_deposit', '<=', $amount);
+                    ->orWhere('minimum_deposit', '<=', $amount);
             })
             ->where(function ($query) {
                 $query->whereNull('usage_limit')
-                      ->orWhereColumn('used_count', '<', 'usage_limit');
+                    ->orWhereColumn('used_count', '<', 'usage_limit');
             })
             ->get();
 
@@ -110,9 +111,9 @@ class DepositService
         $eligibleOffers = $offers->filter(function ($offer) use ($hasFirstDeposit) {
             // First deposit offers only for users without completed deposits
             if ($offer->type === Offer::TYPE_FIRST_DEPOSIT) {
-                return !$hasFirstDeposit;
+                return ! $hasFirstDeposit;
             }
-            
+
             // Other offers are generally available
             return true;
         });
@@ -149,20 +150,28 @@ class DepositService
      */
     protected function generateTransactionId(): string
     {
-        return 'txn_' . uniqid() . '_' . random_int(1000, 9999);
+        return 'txn_'.uniqid().'_'.random_int(1000, 9999);
     }
 
     /**
      * Handle auto-debit for ad spending
+     * Auto-debit will work, but campaigns will be paused if balance is still insufficient
      */
     public function processAutoDebit(User $user, float $amount, array $metadata = []): ?Payment
     {
-        if (!$user->auto_debit_enabled || $user->total_balance >= $amount) {
+        if (! $user->auto_debit_enabled || $user->total_balance >= $amount) {
             return null; // No auto-debit needed
         }
 
         $needed = $amount - $user->total_balance;
         $debitAmount = max($needed, $user->auto_debit_threshold ?? 50);
+
+        Log::info('Processing auto-debit for insufficient balance', [
+            'user_id' => $user->id,
+            'current_balance' => $user->total_balance,
+            'required_amount' => $amount,
+            'debit_amount' => $debitAmount,
+        ]);
 
         // Create auto-debit payment
         $payment = $user->payments()->create([
@@ -189,16 +198,25 @@ class DepositService
      */
     public function processAdSpend(User $user, float $amount, array $metadata = []): Payment
     {
-        return DB::transaction(function () use ($user, $amount, $metadata) {
-            // Try auto-debit if needed
-            if ($user->total_balance < $amount && $user->auto_debit_enabled) {
-                $this->processAutoDebit($user, $amount, $metadata);
-            }
+        // Check if user has insufficient balance BEFORE starting transaction
+        $initialBalance = $user->total_balance;
+        $needsAutoDebit = $initialBalance < $amount && $user->auto_debit_enabled;
 
-            // Check if user has sufficient balance after auto-debit
-            if ($user->fresh()->total_balance < $amount) {
-                throw new \Exception('Insufficient balance for ad spend');
-            }
+        if ($needsAutoDebit) {
+            // Try auto-debit outside of main transaction
+            $this->processAutoDebit($user, $amount, $metadata);
+        }
+
+        // Check if balance is still insufficient after auto-debit
+        $currentBalance = $user->fresh()->total_balance;
+        if ($currentBalance < $amount) {
+            // Pause campaigns OUTSIDE of transaction so it won't be rolled back
+            $this->pauseCampaignsAndNotifyUser($user, $amount);
+            throw new \Exception('Insufficient balance for ad spend. Campaigns have been paused. Please add more balance to resume.');
+        }
+
+        // Now process the spending in a transaction
+        return DB::transaction(function () use ($user, $amount, $metadata) {
 
             // Deduct from balance
             $user->deductBalance($amount, Payment::TYPE_AD_SPEND, 'Ad campaign spending');
@@ -213,5 +231,38 @@ class DepositService
                 'metadata' => $metadata,
             ]);
         });
+    }
+
+    /**
+     * Pause user's active campaigns and send email notification
+     */
+    protected function pauseCampaignsAndNotifyUser(User $user, float $requiredAmount): void
+    {
+        // Get all active campaigns for this user
+        $activeCampaigns = $user->ads()->where('status', \App\Models\Ad::STATUS_ACTIVE)->get();
+
+        if ($activeCampaigns->count() > 0) {
+            // Pause all active campaigns
+            $user->ads()->where('status', \App\Models\Ad::STATUS_ACTIVE)
+                ->update(['status' => \App\Models\Ad::STATUS_PAUSED]);
+
+            // Log the action
+            Log::info('Campaigns paused due to insufficient balance', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'required_amount' => $requiredAmount,
+                'current_balance' => $user->total_balance,
+                'campaigns_paused' => $activeCampaigns->count(),
+                'campaign_ids' => $activeCampaigns->pluck('id')->toArray(),
+            ]);
+
+            // For now, we'll just log the notification instead of sending email
+            // TODO: Create CampaignsPausedNotification mailable class
+            Log::info('Campaign pause notification should be sent', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'message' => 'Your campaigns have been paused due to insufficient balance. Please add funds to resume your campaigns.',
+            ]);
+        }
     }
 }

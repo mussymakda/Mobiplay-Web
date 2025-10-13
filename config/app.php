@@ -123,4 +123,21 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Timeout Configuration
+    |--------------------------------------------------------------------------
+    |
+    | These configuration options determine the timeout settings for various
+    | operations like HTTP requests, API calls, and server operations.
+    |
+    */
+
+    'timeouts' => [
+        'http' => env('HTTP_TIMEOUT', 120),
+        'api' => env('API_TIMEOUT', 300),
+        'server' => env('SERVER_TIMEOUT', 300),
+        'database' => env('DB_TIMEOUT', 120),
+    ],
+
 ];

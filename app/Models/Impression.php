@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Impression extends Model
 {
     const TYPE_DISPLAY = 'display';
+
     const TYPE_QR_SCAN = 'qr_scan';
 
     protected $fillable = [
         'ad_id',
         'user_id',
+        'driver_id',
         'type',
         'ip_address',
         'user_agent',
@@ -37,6 +39,11 @@ class Impression extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(Driver::class);
     }
 
     public static function getTypes(): array

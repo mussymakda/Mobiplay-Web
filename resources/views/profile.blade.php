@@ -52,7 +52,7 @@
       <a href="{{ route('switchLang', 'en') }}" class="{{ app()->getLocale() == 'en' ? 'active' : '' }}"><img src="{{ asset('assets/images/us.svg') }}" alt="{{ __('messages.english') }}"> {{ __('messages.english') }}</a>
       <a href="{{ route('switchLang', 'es') }}" class="{{ app()->getLocale() == 'es' ? 'active' : '' }}"><img src="{{ asset('assets/images/mexico.png') }}" alt="{{ __('messages.spanish') }}" style="height: 25px; width: 25px;" class="auto"> {{ __('messages.spanish') }}</a>
     </div>
-            <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span> <img src="{{ asset('assets/images/dash-profile.png') }}" alt="{{ __('messages.profile') }}"></a>
+            <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span> <img src="{{ Auth::user()->profile_image_url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" alt="{{ __('messages.profile') }}"></a>
           </div>
         </div>
       </div>

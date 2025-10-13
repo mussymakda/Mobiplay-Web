@@ -2,9 +2,8 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\AdResource\Pages;
-use App\Filament\Resources\AdResource\RelationManagers;
 use App\Filament\Forms\Components\InteractiveMap;
+use App\Filament\Resources\AdResource\Pages;
 use App\Models\Ad;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -12,16 +11,15 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AdResource extends Resource
 {
     protected static ?string $model = Ad::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-megaphone';
-    
+
     protected static ?string $navigationGroup = 'Campaign Management';
-    
+
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
@@ -127,21 +125,37 @@ class AdResource extends Resource
 
                 Forms\Components\Section::make('Budget & Performance')
                     ->schema([
-                        Forms\Components\TextInput::make('budget')
+                        Forms\Components\TextInput::make('daily_budget')
+                            ->label('Daily Ad Spend')
                             ->required()
                             ->numeric()
                             ->prefix('$')
                             ->step(0.01)
-                            ->default(100.00)
-                            ->helperText('Total budget for this campaign'),
+                            ->default(10.00)
+                            ->helperText('Maximum amount to spend per day on this campaign'),
+                        Forms\Components\TextInput::make('budget')
+                            ->label('Total Budget (Legacy)')
+                            ->numeric()
+                            ->prefix('$')
+                            ->step(0.01)
+                            ->default(0.00)
+                            ->helperText('Legacy total budget field - leave as 0 for daily budget campaigns'),
                         Forms\Components\TextInput::make('spent')
-                            ->label('Amount Spent')
+                            ->label('Total Amount Spent')
                             ->numeric()
                             ->prefix('$')
                             ->step(0.01)
                             ->default(0.00)
                             ->disabled()
-                            ->helperText('Automatically tracked'),
+                            ->helperText('Total amount spent across all days'),
+                        Forms\Components\TextInput::make('daily_spent')
+                            ->label('Daily Amount Spent')
+                            ->numeric()
+                            ->prefix('$')
+                            ->step(0.01)
+                            ->default(0.00)
+                            ->disabled()
+                            ->helperText('Amount spent today (resets daily)'),
                         Forms\Components\TextInput::make('impressions')
                             ->label('Total Impressions')
                             ->numeric()
@@ -155,6 +169,95 @@ class AdResource extends Resource
                             ->disabled()
                             ->helperText('Number of QR code scans'),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Approval Management')
+                    ->schema([
+                        Forms\Components\Select::make('reviewed_by')
+                            ->label('Reviewed By')
+                            ->relationship('reviewer', 'name')
+                            ->disabled()
+                            ->placeholder('Not yet reviewed'),
+
+                        Forms\Components\DateTimePicker::make('submitted_for_review_at')
+                            ->label('Submitted for Review')
+                            ->disabled(),
+
+                        Forms\Components\DateTimePicker::make('reviewed_at')
+                            ->label('Review Date')
+                            ->disabled(),
+
+                        Forms\Components\Textarea::make('admin_notes')
+                            ->label('Admin Notes')
+                            ->placeholder('Add notes about this ad review')
+                            ->rows(3),
+
+                        Forms\Components\Textarea::make('rejection_reason')
+                            ->label('Rejection Reason')
+                            ->placeholder('Specify why this ad was rejected')
+                            ->rows(2)
+                            ->visible(fn ($record) => $record?->isRejected()),
+
+                        Forms\Components\TagsInput::make('content_flags')
+                            ->label('Content Flags')
+                            ->placeholder('Add content moderation flags')
+                            ->suggestions([
+                                'inappropriate_content',
+                                'misleading_claims',
+                                'poor_quality_media',
+                                'trademark_violation',
+                                'spam_content',
+                                'adult_content',
+                                'violence',
+                                'hate_speech',
+                            ])
+                            ->visible(fn ($record) => $record?->isContentFlagged()),
+
+                        Forms\Components\TextInput::make('revision_count')
+                            ->label('Revision Count')
+                            ->numeric()
+                            ->disabled(),
+
+                        Forms\Components\Toggle::make('auto_approved')
+                            ->label('Auto Approved')
+                            ->disabled(),
+
+                        Forms\Components\TextInput::make('auto_approval_reason')
+                            ->label('Auto Approval Reason')
+                            ->disabled()
+                            ->visible(fn ($record) => $record?->auto_approved),
+                    ])
+                    ->columns(2)
+                    ->visible(fn ($context) => $context === 'edit' || $context === 'view'),
+
+                Forms\Components\Section::make('Approval History')
+                    ->schema([
+                        Forms\Components\KeyValue::make('approval_history')
+                            ->label('History')
+                            ->disabled()
+                            ->keyLabel('Timestamp')
+                            ->valueLabel('Action')
+                            ->formatStateUsing(function ($state) {
+                                if (! $state) {
+                                    return [];
+                                }
+
+                                $formatted = [];
+                                foreach ($state as $entry) {
+                                    $timestamp = isset($entry['timestamp']) ? date('M j, Y g:i A', strtotime($entry['timestamp'])) : 'Unknown';
+                                    $action = $entry['action'] ?? 'Unknown';
+                                    $admin = $entry['admin_name'] ?? 'System';
+                                    $details = $entry['details'] ?? '';
+
+                                    $formatted[$timestamp] = "{$action} by {$admin}: {$details}";
+                                }
+
+                                return $formatted;
+                            }),
+                    ])
+                    ->collapsible()
+                    ->persistCollapsed()
+                    ->visible(fn ($record) => $record && ! empty($record->approval_history)),
+
             ]);
     }
 
@@ -186,6 +289,28 @@ class AdResource extends Resource
                         Ad::STATUS_REJECTED => 'Rejected',
                         default => $state,
                     }),
+
+                Tables\Columns\TextColumn::make('reviewer.name')
+                    ->label('Reviewed By')
+                    ->placeholder('Not reviewed')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('reviewed_at')
+                    ->label('Review Date')
+                    ->dateTime()
+                    ->placeholder('Not reviewed')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\IconColumn::make('content_flagged')
+                    ->label('Flagged')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('revision_count')
+                    ->label('Revisions')
+                    ->badge()
+                    ->color(fn (int $state): string => $state > 2 ? 'danger' : ($state > 0 ? 'warning' : 'success'))
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\BadgeColumn::make('media_type')
                     ->colors([
                         'primary' => Ad::MEDIA_TYPE_IMAGE,
@@ -204,21 +329,25 @@ class AdResource extends Resource
                     ->suffix(' km')
                     ->alignCenter()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('budget')
+                Tables\Columns\TextColumn::make('daily_budget')
+                    ->label('Daily Budget')
                     ->money('USD')
                     ->alignEnd()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('spent')
+                Tables\Columns\TextColumn::make('daily_spent')
+                    ->label('Today Spent')
                     ->money('USD')
                     ->alignEnd()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('remaining_budget')
-                    ->label('Remaining')
+                    ->sortable()
+                    ->color(fn (Ad $record): string => $record->daily_spent >= $record->daily_budget ? 'danger' :
+                        ($record->daily_spent >= ($record->daily_budget * 0.8) ? 'warning' : 'success')
+                    ),
+                Tables\Columns\TextColumn::make('remaining_daily_budget')
+                    ->label('Daily Remaining')
                     ->money('USD')
                     ->alignEnd()
-                    ->color(fn (Ad $record): string => 
-                        $record->remaining_budget <= 0 ? 'danger' : 
-                        ($record->remaining_budget < ($record->budget * 0.2) ? 'warning' : 'success')
+                    ->color(fn (Ad $record): string => $record->remaining_daily_budget <= 0 ? 'danger' :
+                        ($record->remaining_daily_budget < ($record->daily_budget * 0.2) ? 'warning' : 'success')
                     ),
                 Tables\Columns\TextColumn::make('impressions')
                     ->numeric()
@@ -231,7 +360,7 @@ class AdResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('qr_scan_rate')
                     ->label('Scan Rate')
-                    ->formatStateUsing(fn (Ad $record): string => $record->qr_scan_rate . '%')
+                    ->formatStateUsing(fn (Ad $record): string => $record->qr_scan_rate.'%')
                     ->alignCenter()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -290,54 +419,108 @@ class AdResource extends Resource
                     }),
                 Tables\Filters\Filter::make('low_budget')
                     ->label('Low Budget (<20% remaining)')
-                    ->query(fn (Builder $query): Builder => 
-                        $query->whereRaw('(budget - spent) < (budget * 0.2)')
+                    ->query(fn (Builder $query): Builder => $query->whereRaw('(budget - spent) < (budget * 0.2)')
                     ),
                 Tables\Filters\Filter::make('high_performance')
                     ->label('High QR Scan Rate (>5%)')
-                    ->query(fn (Builder $query): Builder => 
-                        $query->whereRaw('impressions > 0 AND (qr_scans / impressions) > 0.05')
+                    ->query(fn (Builder $query): Builder => $query->whereRaw('impressions > 0 AND (qr_scans / impressions) > 0.05')
                     ),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
-                    Tables\Actions\Action::make('activate')
-                        ->icon('heroicon-o-play')
+                    Tables\Actions\Action::make('approve')
+                        ->icon('heroicon-o-check-circle')
                         ->color('success')
-                        ->action(fn (Ad $record) => $record->update(['status' => Ad::STATUS_ACTIVE]))
+                        ->form([
+                            Forms\Components\Textarea::make('admin_notes')
+                                ->label('Approval Notes (Optional)')
+                                ->placeholder('Add any notes about this approval...'),
+                        ])
+                        ->action(function (Ad $record, array $data) {
+                            $admin = auth('admin')->user();
+                            $record->approve($admin, $data['admin_notes'] ?? null);
+                        })
                         ->requiresConfirmation()
-                        ->visible(fn (Ad $record): bool => 
-                            in_array($record->status, [Ad::STATUS_PENDING, Ad::STATUS_PAUSED])
-                        ),
-                    Tables\Actions\Action::make('pause')
-                        ->icon('heroicon-o-pause')
-                        ->color('warning')
-                        ->action(fn (Ad $record) => $record->update(['status' => Ad::STATUS_PAUSED]))
-                        ->requiresConfirmation()
-                        ->visible(fn (Ad $record): bool => $record->status === Ad::STATUS_ACTIVE),
+                        ->modalHeading('Approve Advertisement')
+                        ->modalDescription('This will approve the ad and make it eligible to go live.')
+                        ->visible(fn (Ad $record): bool => $record->isPending()),
+
                     Tables\Actions\Action::make('reject')
-                        ->icon('heroicon-o-x-mark')
+                        ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->form([
                             Forms\Components\Textarea::make('rejection_reason')
                                 ->label('Rejection Reason')
                                 ->required()
                                 ->placeholder('Please specify why this ad is being rejected...'),
+                            Forms\Components\Textarea::make('admin_notes')
+                                ->label('Additional Notes (Optional)')
+                                ->placeholder('Add any additional feedback...'),
                         ])
                         ->action(function (Ad $record, array $data) {
-                            $record->update(['status' => Ad::STATUS_REJECTED]);
-                            // You could store the rejection reason in a separate field if needed
+                            $admin = auth('admin')->user();
+                            $record->reject($admin, $data['rejection_reason'], $data['admin_notes'] ?? null);
                         })
                         ->requiresConfirmation()
-                        ->visible(fn (Ad $record): bool => $record->status === Ad::STATUS_PENDING),
+                        ->modalHeading('Reject Advertisement')
+                        ->modalDescription('This will reject the ad and notify the advertiser.')
+                        ->visible(fn (Ad $record): bool => $record->isPending()),
+
+                    Tables\Actions\Action::make('flag_content')
+                        ->icon('heroicon-o-flag')
+                        ->color('warning')
+                        ->form([
+                            Forms\Components\CheckboxList::make('content_flags')
+                                ->label('Content Issues')
+                                ->required()
+                                ->options([
+                                    'inappropriate_content' => 'Inappropriate Content',
+                                    'misleading_claims' => 'Misleading Claims',
+                                    'poor_quality_media' => 'Poor Quality Media',
+                                    'trademark_violation' => 'Trademark Violation',
+                                    'spam_content' => 'Spam Content',
+                                    'adult_content' => 'Adult Content',
+                                    'violence' => 'Violence',
+                                    'hate_speech' => 'Hate Speech',
+                                ])
+                                ->columns(2),
+                            Forms\Components\Textarea::make('admin_notes')
+                                ->label('Notes')
+                                ->placeholder('Explain the content issues...'),
+                        ])
+                        ->action(function (Ad $record, array $data) {
+                            $admin = auth('admin')->user();
+                            $record->flagContent($data['content_flags'], $admin, $data['admin_notes'] ?? null);
+                        })
+                        ->modalHeading('Flag Content for Review')
+                        ->visible(fn (Ad $record): bool => ! $record->isRejected()),
+
+                    Tables\Actions\Action::make('activate')
+                        ->icon('heroicon-o-play')
+                        ->color('success')
+                        ->action(fn (Ad $record) => $record->update(['status' => Ad::STATUS_ACTIVE]))
+                        ->requiresConfirmation()
+                        ->modalHeading('Activate Campaign')
+                        ->modalDescription('This will make the ad live and start spending budget.')
+                        ->visible(fn (Ad $record): bool => in_array($record->status, [Ad::STATUS_PAUSED]) && $record->isApproved()),
+
+                    Tables\Actions\Action::make('pause')
+                        ->icon('heroicon-o-pause')
+                        ->color('warning')
+                        ->action(fn (Ad $record) => $record->update(['status' => Ad::STATUS_PAUSED]))
+                        ->requiresConfirmation()
+                        ->modalHeading('Pause Campaign')
+                        ->modalDescription('This will pause the ad and stop spending budget.')
+                        ->visible(fn (Ad $record): bool => $record->status === Ad::STATUS_ACTIVE),
+
                     Tables\Actions\DeleteAction::make(),
                 ])
-                ->icon('heroicon-m-ellipsis-vertical')
-                ->size('sm')
-                ->color('gray')
-                ->button()
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

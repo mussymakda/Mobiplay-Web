@@ -33,7 +33,7 @@
                                 <a href="#" class="active"><img src="{{ asset('assets/images/us.svg') }}"> EN</a>
                                 <a href="#" class=""><img src="{{ asset('assets/images/spain.svg') }}"> ES</a>
                             </div>
-                            <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span><img src="{{ asset('assets/images/dark-dash-profile.png') }}"></a>
+                            <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span><img src="{{ Auth::user()->profile_image_url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"></a>
                         </div>
                     </div>
                 </div>

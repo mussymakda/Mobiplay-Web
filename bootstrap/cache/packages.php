@@ -95,6 +95,24 @@
       0 => 'Kirschbaum\\PowerJoins\\PowerJoinsServiceProvider',
     ),
   ),
+  'laravel/boost' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Laravel\\Boost\\BoostServiceProvider',
+    ),
+  ),
+  'laravel/mcp' => 
+  array (
+    'aliases' => 
+    array (
+      'Mcp' => 'Laravel\\Mcp\\Server\\Facades\\Mcp',
+    ),
+    'providers' => 
+    array (
+      0 => 'Laravel\\Mcp\\Server\\McpServiceProvider',
+    ),
+  ),
   'laravel/pail' => 
   array (
     'providers' => 
@@ -102,11 +120,25 @@
       0 => 'Laravel\\Pail\\PailServiceProvider',
     ),
   ),
+  'laravel/roster' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Laravel\\Roster\\RosterServiceProvider',
+    ),
+  ),
   'laravel/sail' => 
   array (
     'providers' => 
     array (
       0 => 'Laravel\\Sail\\SailServiceProvider',
+    ),
+  ),
+  'laravel/sanctum' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Laravel\\Sanctum\\SanctumServiceProvider',
     ),
   ),
   'laravel/tinker' => 

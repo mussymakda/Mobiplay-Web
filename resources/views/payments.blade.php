@@ -59,7 +59,7 @@
                                 <a href="#" class=""><img style="height: 25px; width: 25px;" class="auto" src="assets/images/mexico.png"> ES</a>
                             </div>
                             <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span> <img
-                                    src="assets/images/dash-profile.png"></a>
+                                    src="{{ Auth::user()->profile_image_url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"></a>
                         </div>
                     </div>
                 </div>
