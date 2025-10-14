@@ -7,6 +7,141 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
     <title>Mobiplay</title>
+    <!-- Map container styles -->
+    <style>
+        /* Stable driver marker style */
+        .driver-marker-stable {
+            width: 12px !important;
+            height: 12px !important;
+            border-radius: 50% !important;
+            border: 2px solid white !important;
+            box-shadow: 0 0 3px rgba(0,0,0,0.3) !important;
+            cursor: pointer !important;
+            transition: box-shadow 0.15s ease !important;
+        }
+        
+        /* Pulse animation for active drivers */
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.6);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(76, 175, 80, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+            }
+        }
+
+        /* Make sure markers stay in position on hover */
+        .mapboxgl-marker {
+            transform-origin: center !important;
+        }
+        
+        /* Enhanced popup style */
+        .driver-popup .mapboxgl-popup-content {
+            border-radius: 8px !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+        
+        .driver-popup .mapboxgl-popup-close-button {
+            font-size: 18px !important;
+            padding: 6px 10px !important;
+            color: #666 !important;
+        }
+        
+        /* Animation for driver points when map is panned */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Status indicator pulse animations */
+        .status-available {
+            animation: pulse-green 2s infinite;
+        }
+        
+        .status-busy {
+            animation: pulse-orange 2s infinite;
+        }
+        
+        @keyframes pulse-orange {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.6);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(255, 152, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+            }
+        }
+
+        /* High specificity and !important to ensure our styles win */
+        #map,
+        div#map,
+        body #map {
+            width: 100% !important;
+            height: 70vh !important;
+            min-height: 500px !important;
+            max-height: 700px !important;
+            position: relative !important;
+            display: block !important;
+            border-radius: 0 !important;
+            border: 1px solid #ddd !important;
+            overflow: visible !important;
+            z-index: 1 !important;
+        }
+        
+        /* Fix any parent container issues */
+        .col-lg-7:has(#map),
+        div.col-lg-7:has(#map),
+        [class*="col"]:has(#map) {
+            padding: 0 !important;
+            position: relative !important;
+        }
+        
+        /* Ensure Mapbox canvas is correctly positioned */
+        .mapboxgl-canvas,
+        canvas.mapboxgl-canvas {
+            left: 0 !important;
+            top: 0 !important;
+        }
+        .mapboxgl-map {
+            width: 100%;
+            height: 100%;
+        }
+        #driver-count {
+            position: absolute;
+            top: 10px !important;
+            right: 10px !important;
+            background: #FFCC00 !important; /* Taxi yellow */
+            padding: 8px 14px !important;
+            border-radius: 6px !important;
+            font-size: 14px !important;
+            font-weight: bold !important;
+            color: #000000 !important; /* Black text for contrast */
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25) !important;
+            z-index: 999;
+            border: 2px solid #000000 !important; /* Black border */
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+        
+        /* Taxi icon before driver count */
+        #driver-count::before {
+            content: "";
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='currentColor' d='M5,11L6.5,6.5H17.5L19,11M17.5,16A1.5,1.5 0 0,1 16,14.5A1.5,1.5 0 0,1 17.5,13A1.5,1.5 0 0,1 19,14.5A1.5,1.5 0 0,1 17.5,16M6.5,16A1.5,1.5 0 0,1 5,14.5A1.5,1.5 0 0,1 6.5,13A1.5,1.5 0 0,1 8,14.5A1.5,1.5 0 0,1 6.5,16M18.92,6C18.72,5.42 18.16,5 17.5,5H6.5C5.84,5 5.28,5.42 5.08,6L3,12V20A1,1 0 0,0 4,21H5A1,1 0 0,0 6,20V19H18V20A1,1 0 0,0 19,21H20A1,1 0 0,0 21,20V12L18.92,6Z' /%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+    </style>
     <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,301,400,401,500,501,700,701,900,901,1,2&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
@@ -15,7 +150,7 @@
     <!-- CSS Libraries -->
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ion-rangeslider/css/ion.rangeSlider.min.css">
-    <link href='https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css' rel='stylesheet' />
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css' rel='stylesheet' media="print" onload="this.media='all'" />
     
     <!-- Lottie Animation Library -->
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
@@ -37,17 +172,35 @@
         border: 1px solid #e9ecef;
     }
     
-    /* Map Container Styles */
-    #map {
-        width: 100%;
-        height: 70vh;
-        min-height: 500px;
-        max-height: 700px;
-        border-radius: 0;
+    /* Map Container Styles - Consolidated in the head section */
+    
+    /* Map loading indicator */
+    #map-loading-indicator {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 5px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        text-align: center;
     }
     
-    .col-lg-7:has(#map) {
-        padding: 0 !important;
+    /* Driver marker styles */
+    .driver-marker {
+        width: 14px !important;
+        height: 14px !important;
+        border-radius: 50% !important;
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.5) !important;
+        border: 2px solid white !important;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .mapboxgl-map {
+        font-family: 'Satoshi', sans-serif !important;
     }
     
     .tablet-frame {
@@ -352,7 +505,7 @@
         background: white;
         border-radius: 15px;
         box-shadow: 0 2px 15px rgba(0,0,0,0.08);
-        height: fit-content;
+        height: 60vh;
     }
     
     .creative-box {
@@ -740,10 +893,33 @@
                             <section id="content-wrapper" class="p-0">
                                 <div class="container-fluid p-0">
                                     <div class="row justify-content-end g-0">
-                                        <div class="col-lg-7 order-lg-2">
-                                            <div id='map' ></div>
-                                            <div id="driver-count" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none;">
-                                                0 drivers in area
+                                        <div class="col-lg-7 order-lg-2" style="position: relative;">
+                                            <div id='map' style="width: 100%; height: 85vh; min-height: 600px; max-height: 800px; position: relative; z-index: 1;"></div>
+                                            
+                                            <!-- Map Controls -->
+                                            <div class="map-controls" style="position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; flex-direction: column; gap: 10px;">
+                                                <div class="map-search" style="background: white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); padding: 8px 12px; display: flex; align-items: center;">
+                                                    <input type="text" id="location-search" placeholder="Search location..." style="border: none; outline: none; width: 200px;">
+                                                    <button id="search-button" style="background: none; border: none; cursor: pointer;">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            <path d="M21 21L16.65 16.65" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Loading Indicator -->
+                                            <div id="map-loading" class="text-center py-4" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(255, 255, 255, 0.9); padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 20;">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading map...</span>
+                                                </div>
+                                                <p class="mt-2">Loading map...</p>
+                                            </div>
+                                            
+                                            <!-- Taxi Count Indicator -->
+                                            <div id="driver-count" style="position: absolute; top: 10px; right: 10px; background: #FFCC00; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; color: #000; border: 2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 20; display: flex; align-items: center; gap: 6px;">
+                                                0 taxis in area
                                             </div>
                                         </div>
                                         <div class="col-lg-4 order-lg-1">
@@ -768,6 +944,7 @@
                                                                 <p id="address">Aeropuerto Intercontinental de
                                                                     Queretaro</p>
                                                             </div>
+                                                        </div>
                                                             <div class="location-radius">
                                                                 <label>Set Radius</label>
                                                                 <div class="form-group">
@@ -787,7 +964,6 @@
                                                             <input type="hidden" name="location_name" id="location_name" value="">
                                                         </div>
                                                     </div>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -861,21 +1037,21 @@
                                             </div>
                                             <div class="col-lg-2">
                                                 <div class="">
-                                                    <h4>0</h4>
+                                                    <h4 id="daily-impressions">0</h4>
                                                    <b>Daily Impressions</b></span>
 
                                                 </div>
                                             </div>
                                             <div class="col-lg-2">
                                                 <div class="">
-                                                    <h4>0</h4>
+                                                    <h4 id="monthly-impressions">0</h4>
                                                     <span><b>Monthly Impressions</b> </span>
 
                                                 </div>
                                             </div>
                                             <div class="col-lg-2">
                                                 <div class="">
-                                                    <h4>0</h4>
+                                                    <h4 id="monthly-spend">$0.00</h4>
                                                     <span><b>Monthly Spend</b></span>
 
                                                 </div>
@@ -908,7 +1084,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
     <script src="https://davidshimjs.github.io/qrcodejs/qrcode.min.js"></script>
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js'></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js' defer></script>
     <!-- Load Turf.js from multiple CDNs for reliability -->
     <script>
         // Function to load Turf.js from multiple sources
@@ -950,7 +1126,7 @@
         window.mapInitialized = false;
         window.marker = null;
         window.circleCoordinates = [-99.1332, 19.4326]; // Default to Mexico City
-        window.radius = 10; // Default radius in miles
+        window.radius = 5; // Default radius in miles (consistent with other defaults)
         window.radiusLayerId = 'radius-layer';
         window.driverMarkers = [];
         
@@ -965,7 +1141,16 @@
             // Check if mapboxgl is loaded
             if (typeof mapboxgl === 'undefined') {
                 console.error('MapboxGL not available yet, retrying in 100ms');
-                setTimeout(window.initializeMap, 100);
+                setTimeout(function() {
+                    if (!window.mapInitialized) {
+                        // Call core function by its proper name to avoid recursion
+                        if (typeof initializeMapCore === 'function') {
+                            initializeMapCore();
+                        } else {
+                            console.error('initializeMapCore function not found');
+                        }
+                    }
+                }, 100);
                 return;
             }
             
@@ -984,27 +1169,158 @@
             try {
                 console.log('Creating map in container:', mapContainer);
                 
+                // Log start of map initialization
+                console.log('Starting map initialization...');
+                
                 // Set access token
                 mapboxgl.accessToken = 'pk.eyJ1IjoibXVzdGFuc2lybWFrZGEiLCJhIjoiY20yYzNpd213MHJhNTJqcXduNjU4ZGFkdyJ9.qnsW91lfIZ1EniLcPlAEkQ';
                 
-                // Create map
-                window.map = new mapboxgl.Map({
-                    container: mapContainer,
-                    style: 'mapbox://styles/mapbox/streets-v11',
-                    center: window.circleCoordinates,
-                    zoom: 10
-                });
+                // Define fallback coordinates (Mexico City) if circleCoordinates are invalid
+                let centerCoords = window.circleCoordinates;
+                if (!window.circleCoordinates || !Array.isArray(window.circleCoordinates) || window.circleCoordinates.length !== 2) {
+                    console.warn('Invalid circle coordinates, using fallback location');
+                    centerCoords = [-99.1332, 19.4326]; // Mexico City as fallback
+                    window.circleCoordinates = centerCoords;
+                }
+                
+                // Add a loading indicator
+                const loadingEl = document.createElement('div');
+                loadingEl.id = 'map-loading-indicator';
+                loadingEl.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading map...</span></div>';
+                loadingEl.style.position = 'absolute';
+                loadingEl.style.top = '50%';
+                loadingEl.style.left = '50%';
+                loadingEl.style.transform = 'translate(-50%, -50%)';
+                loadingEl.style.zIndex = '1000';
+                loadingEl.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+                loadingEl.style.padding = '20px';
+                loadingEl.style.borderRadius = '5px';
+                mapContainer.appendChild(loadingEl);
+                
+                // Create map with robust options - add a try-catch for better error handling
+                try {
+                    window.map = new mapboxgl.Map({
+                        container: mapContainer,
+                        style: 'mapbox://styles/mapbox/streets-v11',
+                        center: centerCoords,
+                        zoom: 10,
+                        minZoom: 2,
+                        maxZoom: 18,
+                        failIfMajorPerformanceCaveat: false,
+                        preserveDrawingBuffer: true,
+                        attributionControl: true
+                    });
+                    
+                    console.log('Map object created successfully');
+                } catch (mapError) {
+                    console.error('Error creating map object:', mapError);
+                    
+                    // Show error to user
+                    const errorEl = document.createElement('div');
+                    errorEl.style.padding = '20px';
+                    errorEl.style.backgroundColor = '#f8d7da';
+                    errorEl.style.color = '#721c24';
+                    errorEl.style.borderRadius = '5px';
+                    errorEl.style.margin = '20px';
+                    errorEl.innerHTML = '<strong>Error loading map</strong><br>Please refresh the page and try again.';
+                    mapContainer.appendChild(errorEl);
+                    
+                    // Remove loading indicator
+                    if (loadingEl.parentNode) {
+                        loadingEl.parentNode.removeChild(loadingEl);
+                    }
+                    
+                    throw mapError; // Rethrow to stop execution
+                }
                 
                 // Add events when map is loaded
                 if (window.map) {
+                    let setupAttempted = false;
+                    
+                    // Set a timeout in case the map doesn't load
+                    const mapLoadTimeout = setTimeout(function() {
+                        console.warn('Map load timeout - forcing initialization');
+                        
+                        // Remove loading indicator
+                        const loadingEl = document.getElementById('map-loading-indicator');
+                        if (loadingEl && loadingEl.parentNode) {
+                            loadingEl.parentNode.removeChild(loadingEl);
+                        }
+                        
+                        // Force map initialization if it hasn't happened
+                        if (!window.mapInitialized) {
+                            window.mapInitialized = true;
+                            try {
+                                window.setupMapFeatures();
+                            } catch (e) {
+                                console.error('Error in forced map setup:', e);
+                            }
+                        }
+                    }, 5000); // 5 second timeout
+                    
+                    // Flag to track if the map is currently being moved/zoomed
+                    window.mapIsMoving = false;
+                    
+                    // Track map movement to prevent flickering updates
+                    window.map.on('movestart', () => {
+                        window.mapIsMoving = true;
+                    });
+                    
+                    window.map.on('moveend', () => {
+                        window.mapIsMoving = false;
+                        // Small delay to ensure map is settled
+                        setTimeout(() => {
+                            // If we have cached driver data, refresh the display
+                            if (window.driverCache && window.driverCache.data && window.driverCache.data.drivers) {
+                                window.processDriversInBatches(window.driverCache.data.drivers);
+                            }
+                        }, 100);
+                    });
+                    
                     window.map.on('load', function() {
                         console.log('Map loaded successfully');
                         window.mapInitialized = true;
-                        window.setupMapFeatures();
+                        
+                        // Clear the timeout since map loaded successfully
+                        clearTimeout(mapLoadTimeout);
+                        
+                        // Remove loading indicator
+                        const loadingEl = document.getElementById('map-loading-indicator');
+                        if (loadingEl && loadingEl.parentNode) {
+                            loadingEl.parentNode.removeChild(loadingEl);
+                        }
+                        
+                        try {
+                            // Only attempt setup once
+                            if (!setupAttempted) {
+                                setupAttempted = true;
+                                window.setupMapFeatures();
+                            }
+                        } catch (setupError) {
+                            console.error('Error setting up map features:', setupError);
+                        }
                     });
                     
                     window.map.on('error', function(e) {
                         console.error('Map error:', e);
+                        
+                        // Remove loading indicator on error
+                        const loadingEl = document.getElementById('map-loading-indicator');
+                        if (loadingEl && loadingEl.parentNode) {
+                            loadingEl.parentNode.removeChild(loadingEl);
+                        }
+                        
+                        // Show error message
+                        const errorEl = document.createElement('div');
+                        errorEl.style.padding = '10px';
+                        errorEl.style.backgroundColor = '#f8d7da';
+                        errorEl.style.color = '#721c24';
+                        errorEl.style.borderRadius = '5px';
+                        errorEl.style.margin = '10px';
+                        errorEl.innerHTML = '<strong>Error loading map</strong><br>' + (e.error?.message || 'Unknown map error');
+                        if (window.map.getContainer()) {
+                            window.map.getContainer().appendChild(errorEl);
+                        }
                     });
                 }
             } catch (e) {
@@ -1022,18 +1338,52 @@
             try {
                 console.log('Setting up map features...');
                 
-                // Create a marker
+                // Initialize the Web Worker for driver data fetching
+                // This will significantly improve performance by not blocking the UI thread
+                if (window.Worker) {
+                    console.log('Initializing driver Web Worker for background API calls...');
+                    window.setupDriverWorker();
+                    
+                    // Start auto-refresh for driver data (every 45 seconds)
+                    // Using a longer interval to prevent blinking and reduce unnecessary updates
+                    window.startDriverRefresh(45);
+                } else {
+                    console.log('Web Workers not supported in this browser, using fallback method');
+                    
+                    // Use an even longer interval for browsers without Web Worker support
+                    // to avoid UI blocking (every 60 seconds)
+                    window.startDriverRefresh(60);
+                }
+                
+                // Create a marker for campaign location
                 window.marker = new mapboxgl.Marker({
-                    draggable: true // Make the marker draggable
+                    draggable: true, // Make the marker draggable
+                    color: '#FF5252',  // Use a distinct color for the campaign marker
                 })
                 .setLngLat(window.circleCoordinates) 
                 .addTo(window.map);
                 
-                console.log('Marker created:', window.marker);
+                console.log('Campaign marker created:', window.marker);
     
                 // Setup marker event listeners
                 if (window.marker) {
                     window.marker.on('dragend', window.updateMarkerPosition);
+                }
+                
+                // Initialize empty drivers GeoJSON source and layer if map is loaded
+                if (window.map.isStyleLoaded()) {
+                    setupDriverLayers({
+                        type: 'FeatureCollection',
+                        features: []
+                    });
+                } else {
+                    // Wait for map style to load
+                    window.map.once('style.load', function() {
+                        setupDriverLayers({
+                            type: 'FeatureCollection',
+                            features: []
+                        });
+                    });
                 }
                 
                 // Setup map click event
@@ -1088,21 +1438,50 @@
             }
         };
         
-        // Draw circle with given radius
+        // Draw circle with given radius - fixed implementation to avoid recursion
+        // Throttle the drawCircle function to prevent excessive redraws
+        window._lastCircleDrawTime = 0;
+        
         window.drawCircle = function(radius) {
+            console.log('Circle redrawn after resize - radius:', radius, 'coordinates:', window.circleCoordinates);
+            
+            // Throttle to maximum once per 100ms
+            const now = Date.now();
+            if (now - window._lastCircleDrawTime < 100) {
+                return;
+            }
+            window._lastCircleDrawTime = now;
+            
+            // Check for recursion detection
+            if (window._drawingCircle) {
+                return;
+            }
+            
+            // Set recursion guard flag
+            window._drawingCircle = true;
+            
             try {
-                console.log('Drawing circle with radius:', radius);
+                // Safety check for map
+                if (!window.map || !window.map.loaded()) {
+                    window._drawingCircle = false;
+                    return;
+                }
                 
                 // Remove existing circle source and layer if they exist
-                if (window.map.getSource('circle-source')) {
-                    window.map.removeLayer('circle-fill');
-                    window.map.removeLayer('circle-outline');
-                    window.map.removeSource('circle-source');
+                try {
+                    if (window.map.getSource('circle-source')) {
+                        window.map.removeLayer('circle-fill');
+                        window.map.removeLayer('circle-outline');
+                        window.map.removeSource('circle-source');
+                    }
+                } catch (layerError) {
+                    console.warn('Error removing existing layers:', layerError);
                 }
                 
                 // Check if turf is defined
                 if (typeof turf === 'undefined') {
                     console.error('Turf.js is not loaded yet');
+                    window._drawingCircle = false;
                     return;
                 }
                 
@@ -1142,6 +1521,9 @@
                 console.log('Circle drawn successfully');
             } catch(e) {
                 console.error('Error in drawCircle:', e);
+            } finally {
+                // Always clear the recursion guard
+                window._drawingCircle = false;
             }
         };
         
@@ -1150,8 +1532,21 @@
             try {
                 console.log('Getting location name for:', lngLat);
                 
+                // Handle both object and array formats for coordinates
+                let lng, lat;
+                if (Array.isArray(lngLat)) {
+                    lng = lngLat[0];
+                    lat = lngLat[1];
+                } else if (lngLat.lng && lngLat.lat) {
+                    lng = lngLat.lng;
+                    lat = lngLat.lat;
+                } else {
+                    console.error('Invalid coordinate format:', lngLat);
+                    return;
+                }
+                
                 // Use Mapbox Geocoding API to get location name
-                const apiUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapboxgl.accessToken}`;
+                const apiUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`;
                 
                 fetch(apiUrl)
                     .then(response => response.json())
@@ -1160,10 +1555,16 @@
                             const locationName = data.features[0].place_name;
                             console.log('Location name:', locationName);
                             
-                            // Update location name display
-                            if (document.getElementById('location-name')) {
-                                document.getElementById('location-name').textContent = locationName;
+                            // Update the address display
+                            const addressElement = document.getElementById('address');
+                            if (addressElement) {
+                                addressElement.textContent = locationName;
                             }
+                            
+                            // Update hidden form fields
+                            document.getElementById('longitude').value = lng;
+                            document.getElementById('latitude').value = lat;
+                            document.getElementById('location_name').value = locationName;
                         }
                     })
                     .catch(error => {
@@ -1180,51 +1581,20 @@
         
         window.loadNearbyDrivers = function(longitude, latitude, radiusMiles) {
             try {
-                console.log('Loading nearby drivers:', longitude, latitude, radiusMiles);
+                console.log('Loading nearby drivers from global function:', longitude, latitude, radiusMiles);
                 
-                // Cancel any pending requests
-                if (window.currentDriverRequest) {
-                    window.currentDriverRequest.abort();
-                }
+                // Call the global fetchNearbyDrivers function (now attached to window)
+                // Note: fetchNearbyDrivers expects (latitude, longitude, radiusKm) while this function 
+                // receives (longitude, latitude, radiusMiles), so we need to swap the parameters
+                window.fetchNearbyDrivers(latitude, longitude, radiusMiles);
                 
-                // Clear any existing timeout
-                if (window.driverFetchTimeout) {
-                    clearTimeout(window.driverFetchTimeout);
-                }
-                
-                // Update UI to show loading state
-                if (document.getElementById('driver-count')) {
-                    document.getElementById('driver-count').innerText = 'Loading...';
-                }
-                
-                // Use a timeout to debounce the request
-                window.driverFetchTimeout = setTimeout(function() {
-                    // Build request URL
-                    const url = `/api/drivers/nearby?longitude=${longitude}&latitude=${latitude}&radius=${radiusMiles}`;
-                    
-                    // Make the API request
-                    window.currentDriverRequest = fetch(url)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                const count = data.drivers_count || 0;
-                                
-                                // Update UI with driver count
-                                if (document.getElementById('driver-count')) {
-                                    document.getElementById('driver-count').innerText = count;
-                                }
-                                
-                                console.log(`Found ${count} drivers within ${radiusMiles} miles`);
-                            } else {
-                                console.error('Error fetching nearby drivers:', data.message);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error loading nearby drivers:', error);
-                        });
-                }, 500); // 500ms debounce
             } catch(e) {
-                console.error('Error in loadNearbyDrivers:', e);
+                console.error('Error in window.loadNearbyDrivers:', e);
+                
+                // Fallback to simple UI update
+                if (document.getElementById('driver-count')) {
+                    document.getElementById('driver-count').innerText = 'Error loading taxis';
+                }
             }
         };
         
@@ -1286,6 +1656,63 @@
             const maxValue = 1000; // Set maximum value for quantity input
 
             inputBox.max = maxValue; // Ensure max is set in input attributes
+            
+            // Get selected package's cost per impression
+            function getSelectedPackageCost() {
+                const selectedPackage = document.querySelector('input[name="package_id"]:checked');
+                if (!selectedPackage) return 0.0001; // Default fallback
+                
+                // Get the cost from the selected package's label
+                const packageLabel = document.querySelector(`label[for="${selectedPackage.id}"]`);
+                if (packageLabel) {
+                    const costText = packageLabel.querySelector('.package-pricing small');
+                    if (costText) {
+                        const match = costText.textContent.match(/\$([0-9.]+)/);
+                        if (match) {
+                            return parseFloat(match[1]);
+                        }
+                    }
+                }
+                return 0.0001; // Default fallback
+            }
+            
+            // Calculate and update impressions and spend
+            function updateCalculations() {
+                const dailyBudget = parseFloat(inputBox.value) || 0;
+                const costPerImpression = getSelectedPackageCost();
+                
+                // Calculate daily impressions
+                const dailyImpressions = Math.floor(dailyBudget / costPerImpression);
+                
+                // Calculate monthly impressions (30 days)
+                const monthlyImpressions = dailyImpressions * 30;
+                
+                // Calculate monthly spend
+                const monthlySpend = dailyBudget * 30;
+                
+                // Update the display elements using IDs
+                const dailyImpressionsEl = document.getElementById('daily-impressions');
+                const monthlyImpressionsEl = document.getElementById('monthly-impressions');
+                const monthlySpendEl = document.getElementById('monthly-spend');
+                
+                if (dailyImpressionsEl) {
+                    dailyImpressionsEl.textContent = dailyImpressions.toLocaleString();
+                }
+                if (monthlyImpressionsEl) {
+                    monthlyImpressionsEl.textContent = monthlyImpressions.toLocaleString();
+                }
+                if (monthlySpendEl) {
+                    monthlySpendEl.textContent = '$' + monthlySpend.toFixed(2);
+                }
+                
+                console.log('Budget calculations updated:', {
+                    dailyBudget,
+                    costPerImpression,
+                    dailyImpressions,
+                    monthlyImpressions,
+                    monthlySpend
+                });
+            }
 
             function updateButtonStates() {
                 const value = parseInt(inputBox.value);
@@ -1298,10 +1725,27 @@
                 value = Math.max(1, Math.min(value, maxValue)); // Ensure within bounds
                 inputBox.value = value;
                 updateButtonStates();
+                updateCalculations(); // Update calculations when value changes
             }
 
             minusBtn.onclick = () => adjustValue(-1);
             plusBtn.onclick = () => adjustValue(1);
+            
+            // Update calculations when input changes manually
+            inputBox.addEventListener('input', function() {
+                updateButtonStates();
+                updateCalculations();
+            });
+            
+            // Update calculations when package selection changes
+            document.querySelectorAll('input[name="package_id"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    updateCalculations();
+                });
+            });
+            
+            // Initial calculation on page load
+            updateCalculations();
         })();
     </script>
     <script>
@@ -1412,7 +1856,7 @@
             
             circleCoordinates = [lngLat.lng, lngLat.lat];
             getLocationName(circleCoordinates); // Get the location name
-            drawCircle(radius); // Draw the radius circle
+            localDrawCircle(radius); // Draw the radius circle
             loadNearbyDrivers(lngLat.lat, lngLat.lng, radius); // Load nearby drivers
         }
 
@@ -1451,21 +1895,44 @@
         // that includes better error handling and a fallback method
         // Keeping this comment to avoid breaking references
 
-        // Store driver markers for cleanup
-        // Use global variables for driver markers
-        window.driverMarkers = window.driverMarkers || [];
+        // Make sure driver markers array exists
+        if (typeof window.driverMarkers === 'undefined') {
+            window.driverMarkers = [];
+        }
+        
+        // Use the global variables for tracking requests
         window.driverFetchTimeout = null;
         window.currentDriverRequest = null;
 
         // Local function that delegates to global implementation
         function loadNearbyDrivers(latitude, longitude, radiusKm) {
-            console.log('Local loadNearbyDrivers called, delegating to global implementation');
+            console.log(`Local loadNearbyDrivers called: lat=${latitude}, lng=${longitude}, radius=${radiusKm}`);
             
-            // Swap parameters to match the order expected by the global function
-            if (typeof window.loadNearbyDrivers === 'function') {
-                window.loadNearbyDrivers(longitude, latitude, radiusKm);
-            } else {
-                console.error('Global loadNearbyDrivers function not available');
+            // Try our local implementation first, fallback to global
+            try {
+                // Ensure parameters are properly defined
+                if (isNaN(parseFloat(latitude)) || isNaN(parseFloat(longitude))) {
+                    console.warn('Invalid coordinates provided to loadNearbyDrivers', { latitude, longitude });
+                    // Check if parameters were passed in reversed order
+                    if (isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
+                        console.log('Parameters might be reversed, swapping them');
+                        const temp = latitude;
+                        latitude = longitude;
+                        longitude = temp;
+                    }
+                }
+                
+                // Call our now global implementation
+                window.fetchNearbyDrivers(latitude, longitude, radiusKm);
+            } catch (e) {
+                console.warn('Error using implementation, falling back to global', e);
+                
+                // Swap parameters to match the order expected by the global function as fallback
+                if (typeof window.loadNearbyDrivers === 'function') {
+                    window.loadNearbyDrivers(longitude, latitude, radiusKm);
+                } else {
+                    console.error('Global loadNearbyDrivers function not available');
+                }
             }
         }
         
@@ -1484,11 +1951,284 @@
                 driverTotalElem.textContent = '';
             }
         };
-
+        
+        // Function to fetch nearby drivers
+        // Cache for driver data to reduce API calls
+        window.driverCache = {
+            data: null,
+            timestamp: null,
+            coordinates: null,
+            radius: null,
+            isCacheValid: function(lat, lng, radius) {
+                if (!this.data || !this.timestamp || !this.coordinates) return false;
+                
+                // Cache is valid for 30 seconds
+                const cacheAge = Date.now() - this.timestamp;
+                if (cacheAge > 30000) return false;
+                
+                // Check if coordinates are close enough (within 0.01 degrees)
+                const latDiff = Math.abs(lat - this.coordinates[0]);
+                const lngDiff = Math.abs(lng - this.coordinates[1]);
+                const radiusDiff = Math.abs(radius - this.radius);
+                
+                return latDiff < 0.01 && lngDiff < 0.01 && radiusDiff < 1;
+            }
+        };
+        
+        // Create a Web Worker for handling driver data fetching in a separate thread
+        // This will significantly improve performance by not blocking the UI thread
+        window.setupDriverWorker = function() {
+            // Create the worker from a blob URL to avoid creating a separate file
+            const workerCode = `
+                // Driver API fetch worker
+                let currentRequest = null;
+                let driverCache = {
+                    timestamp: 0,
+                    data: null,
+                    coordinates: null,
+                    radius: 0
+                };
+                
+                // Listen for messages from the main thread
+                self.addEventListener('message', async function(e) {
+                    const { type, latitude, longitude, radiusKm } = e.data;
+                    
+                    if (type === 'fetchDrivers') {
+                        try {
+                            // Validate parameters
+                            if (!latitude || !longitude) {
+                                // Default to Mexico City coordinates if none provided
+                                latitude = 19.4326;
+                                longitude = -99.1332;
+                            }
+                            
+                            // Ensure radius is valid
+                            const radius = radiusKm || 5;
+                            
+                            // Cache control - Check if we have recent driver data for this location and radius
+                            const isCacheValid = function(lat, lng, rad) {
+                                // Check if cache exists and is recent (less than 10 seconds old)
+                                if (!driverCache || !driverCache.timestamp || (Date.now() - driverCache.timestamp) > 10000) {
+                                    return false;
+                                }
+                                
+                                // Check if coordinates and radius match
+                                const latDiff = Math.abs(lat - driverCache.coordinates[0]);
+                                const lngDiff = Math.abs(lng - driverCache.coordinates[1]);
+                                const radiusDiff = Math.abs(rad - driverCache.radius);
+                                
+                                // Allow small differences for floating point inaccuracies
+                                return latDiff < 0.01 && lngDiff < 0.01 && radiusDiff < 1;
+                            };
+                            
+                            // Check cache first
+                            if (isCacheValid(latitude, longitude, radius)) {
+                                console.log('Worker: Using cached driver data');
+                                if (driverCache.data.success && driverCache.data.drivers.length > 0) {
+                                    // Send back the cached data
+                                    self.postMessage({
+                                        type: 'success',
+                                        data: driverCache.data,
+                                        fromCache: true
+                                    });
+                                    return;
+                                }
+                            }
+                            
+                            // Make API call with timeout
+                            const response = await fetch('/api/campaigns/nearby-drivers?latitude=' + latitude + '&longitude=' + longitude + '&radius=' + radius, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error('Server error: ' + response.status);
+                            }
+                            
+                            const data = await response.json();
+                            
+                            // Update cache
+                            driverCache.data = data;
+                            driverCache.timestamp = Date.now();
+                            driverCache.coordinates = [latitude, longitude];
+                            driverCache.radius = radius;
+                            
+                            // Send the data back to the main thread
+                            self.postMessage({
+                                type: 'success',
+                                data: data
+                            });
+                            
+                        } catch (error) {
+                            // Send error back to main thread
+                            self.postMessage({
+                                type: 'error',
+                                error: error.message,
+                                details: {
+                                    latitude,
+                                    longitude,
+                                    radiusKm
+                                }
+                            });
+                        }
+                    }
+                });
+            `;
+            
+            // Create a blob URL for the worker
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const workerUrl = URL.createObjectURL(blob);
+            
+            // Create the worker and set up event handlers
             try {
-                // Make API call to get nearby drivers with timeout (async, non-blocking)
+                window.driverWorker = new Worker(workerUrl);
+                
+                window.driverWorker.onmessage = function(e) {
+                    const message = e.data;
+                    
+                    switch (message.type) {
+                        case 'success':
+                            console.log('Received driver data from worker', message.fromCache ? '(from cache)' : '');
+                            
+                            // Process the driver data
+                            const data = message.data;
+                            
+                            if (data.success && data.drivers && data.drivers.length > 0) {
+                                console.log(`Found ${data.drivers.length} nearby drivers`);
+                                
+                                // Don't clear if this is from cache to prevent flickering
+                                // Or if the map is currently being interacted with
+                                if (!message.fromCache && !window.mapIsMoving) {
+                                    // Only clear if we're not using cached data
+                                    window.clearDriverMarkers();
+                                }
+                                
+                                // Process drivers using our GeoJSON approach
+                                // Only if the map isn't currently being moved/zoomed
+                                if (!window.mapIsMoving) {
+                                    window.processDriversInBatches(data.drivers);
+                                } else {
+                                    console.log('Map is moving - deferring driver update to prevent flicker');
+                                    // Store for later use when map movement ends
+                                    if (!window.deferredDriverUpdate) {
+                                        window.deferredDriverUpdate = setTimeout(() => {
+                                            if (!window.mapIsMoving && data.drivers) {
+                                                window.processDriversInBatches(data.drivers);
+                                            }
+                                            window.deferredDriverUpdate = null;
+                                        }, 200);
+                                    }
+                                }
+                                
+                                // Show driver count in UI (always update this)
+                                showDriverCount(data.drivers.length, data.total_count || '?');
+                            } else {
+                                console.log('No nearby drivers found');
+                                if (!window.mapIsMoving) {
+                                    window.clearDriverMarkers();
+                                }
+                                showDriverCount(0, 0);
+                            }
+                            break;
+                            
+                        case 'error':
+                            console.error('Worker error:', message.error, message.details);
+                            
+                            // Show error in UI with context
+                            let errorMessage = 'Error loading drivers';
+                            if (message.error === 'Request timeout') {
+                                errorMessage = 'Network timeout';
+                            } else if (message.error.includes('Server error')) {
+                                errorMessage = message.error;
+                            }
+                            
+                            showDriverCount(errorMessage, '');
+                            
+                            // Show a less intrusive error message
+                            if (typeof showErrorToast === 'function') {
+                                showErrorToast('Unable to load nearby drivers: ' + message.error);
+                            }
+                            break;
+                    }
+                };
+                
+                window.driverWorker.onerror = function(error) {
+                    console.error('Worker error:', error);
+                    showErrorToast('Error with driver data processing. Please refresh the page.');
+                };
+                
+                console.log('Driver Web Worker initialized successfully');
+                return true;
+                
+            } catch (error) {
+                console.error('Failed to create Web Worker:', error);
+                showErrorToast('Your browser may not support some features. Driver updates may be slower.');
+                return false;
+            } finally {
+                // Clean up the blob URL
+                URL.revokeObjectURL(workerUrl);
+            }
+        };
+        
+        // Make fetchNearbyDrivers available globally so it can be called from window.loadNearbyDrivers
+        window.fetchNearbyDrivers = async function fetchNearbyDrivers(latitude, longitude, radiusKm) {
+            // Validate inputs and provide defaults if necessary
+            if (!latitude || !longitude) {
+                console.warn('Missing coordinates for fetchNearbyDrivers, using defaults');
+                // Default to Mexico City coordinates if none provided
+                latitude = 19.4326;
+                longitude = -99.1332;
+            }
+            
+            // Ensure radius is valid
+            radiusKm = radiusKm || 5;
+            
+            // If we have a worker, use it for better performance
+            if (window.driverWorker) {
+                console.log(`Using worker to fetch drivers at [${latitude}, ${longitude}] with radius ${radiusKm} miles`);
+                
+                // Show loading state
+                showDriverCount('Loading...', '');
+                
+                // Send the fetch request to the worker
+                window.driverWorker.postMessage({
+                    type: 'fetchDrivers',
+                    latitude: parseFloat(latitude),
+                    longitude: parseFloat(longitude),
+                    radiusKm: parseFloat(radiusKm)
+                });
+                
+                return;
+            }
+            
+            // Fallback to the original implementation if worker isn't available
+            
+            // Check cache first
+            if (window.driverCache.isCacheValid(latitude, longitude, radiusKm)) {
+                console.log('Using cached driver data');
+                if (window.driverCache.data.success && window.driverCache.data.drivers.length > 0) {
+                    window.clearDriverMarkers();
+                    await window.processDriversInBatches(window.driverCache.data.drivers);
+                    showDriverCount(window.driverCache.data.drivers.length, window.driverCache.data.total_count);
+                    return;
+                }
+            }
+            
+            // Create an AbortController for this request
+            const controller = new AbortController();
+            
+            try {
+                // Show loading state
+                showDriverCount('Loading...', '');
+                
+                console.log(`Fetching drivers at [${latitude}, ${longitude}] with radius ${radiusKm} miles`);
+                
+                // Make API call with reduced timeout (5 seconds is enough)
                 const response = await Promise.race([
-                    fetch(`{{ route('campaigns.nearby-drivers') }}?latitude=${latitude}&longitude=${longitude}&radius=${radiusKm}`, {
+                    fetch(`/api/campaigns/nearby-drivers?latitude=${latitude}&longitude=${longitude}&radius=${radiusKm}`, {
                         signal: controller.signal,
                         method: 'GET',
                         headers: {
@@ -1496,14 +2236,14 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     }),
-                    // Timeout promise (reduced to 2 seconds)
+                    // Reduced timeout to 5 seconds for better UX
                     new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('Request timeout')), 2000)
+                        setTimeout(() => reject(new Error('Request timeout')), 5000)
                     )
                 ]);
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`Server error: ${response.status}. Please try again.`);
                 }
 
                 const data = await response.json();
@@ -1511,20 +2251,26 @@
                 // Clear the current request reference
                 currentDriverRequest = null;
                 
-                if (data.success && data.drivers.length > 0) {
+                // Update cache
+                window.driverCache.data = data;
+                window.driverCache.timestamp = Date.now();
+                window.driverCache.coordinates = [latitude, longitude];
+                window.driverCache.radius = radiusKm;
+                
+                if (data.success && data.drivers && data.drivers.length > 0) {
                     console.log(`Found ${data.drivers.length} nearby drivers`);
                     
                     // Clear existing markers before adding new ones
-                    clearDriverMarkers();
+                    window.clearDriverMarkers();
                     
-                    // Process drivers in batches to avoid UI blocking
-                    await processDriversInBatches(data.drivers);
+                    // Process drivers using our GeoJSON approach
+                    await window.processDriversInBatches(data.drivers);
                     
                     // Show driver count in UI
-                    showDriverCount(data.drivers.length, data.total_count);
+                    showDriverCount(data.drivers.length, data.total_count || '?');
                 } else {
                     console.log('No nearby drivers found');
-                    clearDriverMarkers();
+                    window.clearDriverMarkers();
                     showDriverCount(0, 0);
                 }
             } catch (error) {
@@ -1537,98 +2283,218 @@
                     return;
                 }
                 
-                console.error('Error loading nearby drivers:', error);
-                showDriverCount('Error loading drivers', '');
+                // Log detailed error information for debugging
+                console.error('Error loading nearby drivers:', error, {
+                    latitude: latitude,
+                    longitude: longitude,
+                    radiusKm: radiusKm,
+                    endpoint: `/api/campaigns/nearby-drivers`,
+                    errorMessage: error.message
+                });
+                
+                // Show error in UI with more context
+                let errorMessage = 'Error loading drivers';
+                if (error.message === 'Request timeout') {
+                    errorMessage = 'Network timeout';
+                } else if (error.message.includes('HTTP error')) {
+                    errorMessage = `Server error: ${error.message}`;
+                }
+                
+                showDriverCount(errorMessage, '');
                 
                 // Show a less intrusive error message
                 if (typeof showErrorToast === 'function') {
-                    showErrorToast('Unable to load nearby drivers');
+                    showErrorToast('Unable to load nearby drivers: ' + error.message);
                 }
             }
         }
 
         // Process drivers in batches to prevent UI blocking
-        async function processDriversInBatches(drivers) {
-            const batchSize = 10; // Process 10 drivers at a time
+        window.processDriversInBatches = async function processDriversInBatches(drivers) {
+            // Skip processing if no map or no drivers (prevents blinking)
+            if (!map || !drivers) {
+                console.log('No map or no drivers data - skipping update');
+                return;
+            }
             
-            for (let i = 0; i < drivers.length; i += batchSize) {
-                const batch = drivers.slice(i, i + batchSize);
-                
-                // Process batch
-                batch.forEach(driver => {
-                    addDriverMarker(driver);
+            // Don't update if we're currently zooming or panning
+            if (window.mapIsMoving) {
+                console.log('Map is currently moving - skipping driver update to prevent flicker');
+                return;
+            }
+            
+            // Limit to maximum 100 drivers to prevent performance issues
+            const limitedDrivers = drivers.slice(0, 100);
+            
+            // Create GeoJSON data from drivers
+            const driversGeoJSON = window.createDriversGeoJSON(limitedDrivers);
+            
+            // Check if map and sources are ready
+            if (!map.isStyleLoaded()) {
+                console.log('Map style not loaded yet, waiting...');
+                await new Promise(resolve => {
+                    const checkStyleLoaded = () => {
+                        if (map.isStyleLoaded()) {
+                            resolve();
+                        } else {
+                            setTimeout(checkStyleLoaded, 100);
+                        }
+                    };
+                    checkStyleLoaded();
+                });
+            }
+            
+            // Add or update the GeoJSON source
+            if (!map.getSource('drivers')) {
+                // First time: add source and layers
+                setupDriverLayers(driversGeoJSON);
+            } else {
+                try {
+                    // Update existing source with smooth transition
+                    // This prevents blinking by using a better update method
+                    map.getSource('drivers').setData(driversGeoJSON);
+                } catch (e) {
+                    console.error('Error updating driver source:', e);
+                    // If we hit an error, try recreating the layer
+                    setupDriverLayers(driversGeoJSON);
+                }
+            }
+            
+            // Log successful update
+            console.log(`Updated driver layer with ${limitedDrivers.length} drivers`);
+        }
+        
+        // Setup the map layers for drivers (source + circle layer + symbol layer)
+        function setupDriverLayers(initialData) {
+            try {
+                // Add source for drivers
+                map.addSource('drivers', {
+                    type: 'geojson',
+                    data: initialData || {
+                        type: 'FeatureCollection',
+                        features: []
+                    },
+                    cluster: false
                 });
                 
-                // Yield control to browser to prevent UI blocking 
-                if (i + batchSize < drivers.length) {
-                    await new Promise(resolve => setTimeout(resolve, 0));
-                }
+                // Use simple circle layer instead of custom icons
+                map.addLayer({
+                    id: 'driver-points',
+                    type: 'circle',
+                    source: 'drivers',
+                    paint: {
+                        'circle-radius': 6,
+                        'circle-color': '#3887be', // Standard Mapbox blue
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': '#ffffff',
+                        'circle-opacity': 0.85
+                    }
+                });
+                // No custom icon creation needed - using standard Mapbox circles
+                console.log('Using standard Mapbox circle markers for drivers');
+                
+                // No popup for simpler UI
+                // setupDriverPopups();
+                
+                console.log('Driver layers setup complete');
+            } catch (e) {
+                console.error('Error setting up driver layers:', e);
             }
         }
 
-        // Function to add a driver marker to the map
+        // Function to setup popups for the driver points - DISABLED
+        function setupDriverPopups() {
+            // No popups are shown for driver points
+            console.log('Driver popups disabled');
+            
+            // We're no longer showing popups for driver points
+            // Just change cursor to pointer on hover for better UX
+            map.on('mouseenter', 'driver-points', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+            
+            // Reset cursor when leaving the feature
+            map.on('mouseleave', 'driver-points', () => {
+                map.getCanvas().style.cursor = '';
+                // No popup to remove
+            });
+        }
+        
+        // Helper function for popup content - DISABLED
+        function getDriverPopupContent(driver) {
+            // We're no longer showing popup content
+            // This is kept for backwards compatibility but not used
+            
+            // Parse driver properties if they're JSON strings (happens with GeoJSON properties)
+            const driverData = typeof driver === 'string' ? JSON.parse(driver) : driver;
+            
+            // Return minimal content (not shown to users)
+            return `<div>Taxi</div>`;
+        }
+        
+        // Legacy function to add individual driver markers (kept for backward compatibility)
         function addDriverMarker(driver) {
-            // Create attractive driver marker element
-            var el = document.createElement('div');
-            el.className = 'driver-marker';
+            // Create popup first
+            const popup = new mapboxgl.Popup({
+                offset: 25,
+                closeButton: false,
+                closeOnClick: true,
+                maxWidth: '300px',
+                className: 'driver-popup'
+            });
+            
+            // Set popup content
+            popup.setHTML(`
+                <div style="padding: 6px;">
+                    <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px; color: #1F2937;">${driver.name}</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="font-size: 13px; color: #6b7280; font-weight: 500;">Status:</span>
+                        <span style="font-size: 13px; color: ${driver.status_color}; font-weight: 600;">${driver.is_active ? 'Active' : 'Inactive'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="font-size: 13px; color: #6b7280; font-weight: 500;">Vehicle:</span>
+                        <span style="font-size: 13px; color: #374151; font-weight: 500;">${driver.vehicle}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="font-size: 13px; color: #6b7280; font-weight: 500;">Distance:</span>
+                        <span style="font-size: 13px; color: #374151; font-weight: 600;">${driver.distance} miles</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 13px; color: #6b7280; font-weight: 500;">Last Update:</span>
+                        <span style="font-size: 13px; color: #374151;">${driver.last_update}</span>
+                    </div>
+                </div>
+            `);
+            
+            // Create HTML element for the custom marker
+            const el = document.createElement('div');
+            
+            // Use a simple colored dot without relative positioning that causes shift issues
+            el.className = 'driver-marker-stable';
             el.style.cssText = `
-                width: 32px;
-                height: 32px;
+                width: 12px;
+                height: 12px;
                 border-radius: 50%;
-                background: linear-gradient(135deg, ${driver.status_color} 0%, ${driver.status_color}dd 100%);
+                background-color: ${driver.status_color || '#4CAF50'};
                 border: 2px solid white;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2);
+                box-shadow: 0 0 3px rgba(0,0,0,0.3);
                 cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.2s ease;
-                position: relative;
-                overflow: hidden;
-                z-index: 1000;
             `;
-            
-            // Create professional taxi/cab icon for active drivers
-            var taxiIcon = document.createElement('div');
-            taxiIcon.style.cssText = `
-                width: 28px;
-                height: 28px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            `;
-            
-            // Create SVG taxi icon with proper styling
-            var svgIcon = '';
-            svgIcon = `
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
-                        <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11C5.84 5 5.28 5.42 5.08 6.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
-                        <circle cx="12" cy="3" r="1.5" fill="white"/>
-                        <text x="12" y="4" text-anchor="middle" font-size="2" fill="${driver.status_color}" font-weight="bold">●</text>
-                    </svg>
-                `;
-            
-            taxiIcon.innerHTML = svgIcon;
-            el.appendChild(taxiIcon);
             
             // Add animation for active drivers
             if (driver.is_active) {
                 el.style.animation = 'pulse-green 2s infinite';
             }
             
-            // Add hover effect with proper positioning
+            // Add hover effect with proper positioning - using minimal transform
             el.addEventListener('mouseenter', function() {
-                this.style.transform = 'scale(1.1)';
-                this.style.transformOrigin = 'center center';
-                this.style.position = 'relative';
+                this.style.boxShadow = '0 0 5px rgba(0,0,0,0.5)';
                 this.style.zIndex = '1001';
                 this.style.animation = 'none'; // Stop pulsing on hover
             });
             
             el.addEventListener('mouseleave', function() {
-                this.style.transform = 'scale(1)';
-                this.style.transformOrigin = 'center center';
-                this.style.position = 'relative';
+                this.style.boxShadow = '0 0 3px rgba(0,0,0,0.3)';
                 this.style.zIndex = '1000';
                 // Restore animation
                 if (driver.is_active) {
@@ -1636,12 +2502,8 @@
                 }
             });
 
-            // Create enhanced popup for driver info
-            var popup = new mapboxgl.Popup({ 
-                offset: 30,
-                closeButton: true,
-                closeOnClick: false
-            }).setHTML(`
+            // Use the existing popup with updated content
+            popup.setHTML(`
                 <div style="padding: 12px; min-width: 220px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
                     <div style="display: flex; align-items: center; margin-bottom: 10px;">
                         <div style="width: 12px; height: 12px; border-radius: 50%; background: ${driver.status_color}; margin-right: 8px;"></div>
@@ -1672,14 +2534,17 @@
             console.log(`Creating marker for ${driver.name} at [${driver.longitude}, ${driver.latitude}]`);
             console.log('Map bounds:', map.getBounds());
             
-            var marker = new mapboxgl.Marker(el)
-                .setLngLat([driver.longitude, driver.latitude])
-                .setPopup(popup)
-                .addTo(map);
+            var marker = new mapboxgl.Marker({
+                element: el,
+                anchor: 'center' // This ensures the marker is properly centered
+            })
+            .setLngLat([driver.longitude, driver.latitude])
+            .setPopup(popup)
+            .addTo(map);
 
             // Store marker for cleanup
-            driverMarkers.push(marker);
-            console.log(`✓ Marker created and added to map. Total markers: ${driverMarkers.length}`);
+            window.driverMarkers.push(marker);
+            console.log(`✓ Marker created and added to map. Total markers: ${window.driverMarkers.length}`);
             
             // Log marker visibility
             setTimeout(() => {
@@ -1690,11 +2555,53 @@
         }
 
         // Function to clear all driver markers
-        function clearDriverMarkers() {
-            driverMarkers.forEach(marker => {
-                marker.remove();
-            });
-            driverMarkers = [];
+        window.clearDriverMarkers = function clearDriverMarkers() {
+            console.log(`Clearing driver markers`);
+            
+            // If using GeoJSON source, just update it with an empty feature collection
+            if (map.getSource('drivers')) {
+                map.getSource('drivers').setData({
+                    type: 'FeatureCollection',
+                    features: []
+                });
+            }
+            
+            // For backward compatibility, also clear any individual markers
+            if (window.driverMarkers && window.driverMarkers.length > 0) {
+                const markersToRemove = [...window.driverMarkers];
+                markersToRemove.forEach(marker => {
+                    if (marker && typeof marker.remove === 'function') {
+                        marker.remove();
+                    }
+                });
+                window.driverMarkers = [];
+            }
+        }
+        
+        // Convert driver data to GeoJSON feature collection
+        window.createDriversGeoJSON = function createDriversGeoJSON(drivers) {
+            return {
+                type: 'FeatureCollection',
+                features: drivers.map(driver => ({
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [driver.longitude, driver.latitude]
+                    },
+                    properties: {
+                        id: driver.id,
+                        // We're not showing these properties in popups anymore,
+                        // but we'll keep them in the data structure for future use
+                        name: "Driver",  // Generic label for drivers
+                        vehicle: driver.vehicle,
+                        status: driver.status,
+                        status_color: '#3887be', // Standard Mapbox blue for all drivers
+                        distance: driver.distance,
+                        last_update: driver.last_update,
+                        is_active: driver.is_active
+                    }
+                }))
+            };
         }
 
         // Function to show driver count in UI
@@ -1704,43 +2611,75 @@
                 if (nearbyCount === 'Loading...') {
                     countElement.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="width: 12px; height: 12px; border: 2px solid #f3f3f3; border-top: 2px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                            Loading drivers...
+                            <div style="width: 12px; height: 12px; border: 2px solid #f3f3f3; border-top: 2px solid #000000; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                            Loading taxis...
                         </div>
                     `;
                     countElement.style.display = 'block';
                 } else if (nearbyCount === 'Error loading drivers') {
                     countElement.innerHTML = `
                         <div style="color: #e74c3c;">
-                            ⚠️ Error loading drivers
+                            ⚠️ Error loading taxis
                         </div>
                     `;
                     countElement.style.display = 'block';
                 } else {
-                    countElement.textContent = `${nearbyCount} drivers in area`;
+                    countElement.textContent = `${nearbyCount} taxis in area`;
                     countElement.style.display = 'block'; // Always show the count, even if 0
                 }
             }
         }
 
-        // Wait for map to load before adding circle and event listeners
-        map.on('load', function() {
+        // Helper function to set up the map when it's ready
+        function setupMapWhenReady() {
+            if (!map || !map.loaded()) {
+                console.log('Map not fully ready yet, waiting...');
+                setTimeout(setupMapWhenReady, 500);
+                return;
+            }
+            
+            console.log('Map is loaded and ready, setting up features');
+            
             // Resize map to ensure proper rendering
             map.resize();
             
             // Initial draw of the circle
-            drawCircle(radius);
+            if (typeof window.drawCircle === 'function') {
+                window.drawCircle(radius);
+            }
             
             // Load initial nearby drivers
-            loadNearbyDrivers(circleCoordinates[1], circleCoordinates[0], radius);
+            if (typeof loadNearbyDrivers === 'function') {
+                loadNearbyDrivers(circleCoordinates[1], circleCoordinates[0], radius);
+            }
             
-            // Add marker drag event listener
-            marker.on('drag', updateMarkerPosition);
-            marker.on('dragend', updateMarkerPosition);
+            // Add marker drag event listener if marker exists
+            if (marker) {
+                marker.on('drag', updateMarkerPosition);
+                marker.on('dragend', updateMarkerPosition);
+            }
             
             // Initialize the location name
-            getLocationName(circleCoordinates);
-        });
+            if (typeof getLocationName === 'function') {
+                getLocationName(circleCoordinates);
+            }
+        }
+
+        // Wait for map to load before adding circle and event listeners
+        if (map) {
+            map.on('load', function() {
+                console.log('Map load event fired');
+                setupMapWhenReady();
+            });
+            
+            // Backup setup in case the load event already fired
+            if (map.loaded()) {
+                console.log('Map already loaded, setting up features directly');
+                setupMapWhenReady();
+            }
+        } else {
+            console.error('Map object not available for event binding');
+        }
 
         // Function to handle radius slider
         document.getElementById('radius-slider').addEventListener('input', function() {
@@ -1863,10 +2802,59 @@
         var circleCoordinates = [-99.1332, 19.4326]; // Default coordinates
         var radiusLayerId = 'radius-circle'; // Circle layer ID
         
-        // Store driver markers for cleanup
-        var driverMarkers = [];
-        var driverFetchTimeout;
-        var currentDriverRequest;
+        // Driver markers are managed in the main JavaScript code
+        // These are just backups if the window variables aren't set
+        if (typeof window.driverMarkers === 'undefined') {
+            window.driverMarkers = [];
+        }
+        if (typeof window.driverFetchTimeout === 'undefined') {
+            window.driverFetchTimeout = null;
+        }
+        
+        // Auto-refresh drivers at regular intervals
+        window.startDriverRefresh = function(intervalSeconds) {
+            // Default to 30 seconds if not specified
+            const refreshInterval = (intervalSeconds || 30) * 1000;
+            
+            // Clear any existing interval
+            window.stopDriverRefresh();
+            
+            console.log(`Starting automatic driver refresh every ${refreshInterval/1000} seconds`);
+            
+            // Set up a new interval
+            window.driverRefreshInterval = setInterval(() => {
+                // Only refresh if we have valid coordinates and radius
+                if (window.circleCoordinates && window.circleCoordinates.length === 2 && window.radius > 0) {
+                    console.log('Auto-refreshing driver data...');
+                    
+                    try {
+                        // Call the driver fetch function with current coordinates
+                        window.fetchNearbyDrivers(
+                            window.circleCoordinates[1],  // latitude
+                            window.circleCoordinates[0],  // longitude
+                            window.radius                 // radius
+                        );
+                    } catch (error) {
+                        console.error('Error in auto-refresh:', error);
+                        // Don't show an error toast for background refreshes
+                    }
+                }
+            }, refreshInterval);
+            
+            return true;
+        };
+        
+        // Stop the auto-refresh
+        window.stopDriverRefresh = function() {
+            if (window.driverRefreshInterval) {
+                clearInterval(window.driverRefreshInterval);
+                window.driverRefreshInterval = null;
+                console.log('Stopped automatic driver refresh');
+            }
+        };
+        if (typeof window.currentDriverRequest === 'undefined') {
+            window.currentDriverRequest = null;
+        }
     </script>
 
     <script>
@@ -2009,19 +2997,12 @@
         window.map = null;
         window.mapInitialized = false;
         window.marker = null;
-        window.circleCoordinates = [0, 0];
+        window.circleCoordinates = [-99.1332, 19.4326]; // Default to Mexico City
         window.radius = 5; // Default radius in miles
         
-        // Call our globally defined initialization function
+        // Safe initialization function with no recursion
         function initializeMap() {
-            console.log('Local initializeMap called, delegating to global implementation');
-            if (typeof window.initializeMap === 'function') {
-                window.initializeMap();
-            } else {
-                console.error('Global map initialization function not found');
-            }
-            
-            console.log('Starting map initialization...');
+            console.log('Local initializeMap called - direct implementation');
             
             // Safety check - don't use waitForLibraries, directly check
             if (typeof mapboxgl === 'undefined') {
@@ -2033,6 +3014,7 @@
             console.log('MapboxGL available, initializing map now');
             
             try {
+                // Call the core function directly without delegation
                 initializeMapCore();
             } catch (e) {
                 console.error('Error in map initialization:', e);
@@ -2043,7 +3025,219 @@
         // Add direct initialization on page load
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Document loaded, initializing map directly');
-            // Don't initialize immediately, wait a bit for resources to load
+            
+            // Function to check map visibility and fix if needed
+            function checkMapVisibility() {
+                console.log('Checking map visibility...');
+                const mapEl = document.getElementById('map');
+                
+                if (!mapEl) {
+                    console.error('Map element not found!');
+                    return;
+                }
+                
+                console.log('Map element found:', mapEl);
+                console.log('Map dimensions:', mapEl.getBoundingClientRect());
+                console.log('Map display style:', window.getComputedStyle(mapEl).display);
+                console.log('Map visible:', mapEl.offsetParent !== null);
+                
+                // Fix map visibility if needed
+                if (window.getComputedStyle(mapEl).display === 'none' || 
+                    window.getComputedStyle(mapEl).height === '0px') {
+                    console.log('Fixing map visibility...');
+                    mapEl.style.display = 'block';
+                    mapEl.style.width = '100%';
+                    mapEl.style.height = '70vh';
+                    mapEl.style.minHeight = '500px';
+                    mapEl.style.maxHeight = '700px';
+                    
+                    // Refresh the map if it exists
+                    if (window.map) {
+                        console.log('Resizing map...');
+                        window.map.resize();
+                    }
+                }
+            }
+            
+            // Check map visibility before initializing
+            checkMapVisibility();
+            
+            // Force initial map initialization
+            setTimeout(() => {
+                console.log('Forcing initial map initialization attempt');
+                initializeMap();
+                checkMapVisibility();
+            }, 1000);
+            
+            // Initialize map when step 2 (Location) becomes visible
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'style') {
+                        const step2 = document.getElementById('step-2');
+                        if (step2 && step2.style.display !== 'none') {
+                            console.log('Step 2 is now visible, initializing map');
+                            initializeMap();
+                            
+                            // Check visibility again after map is initialized
+                            setTimeout(checkMapVisibility, 500);
+                            
+                                            // Double check again after a longer delay
+                            setTimeout(function() {
+                                checkMapVisibility();
+                                if (window.map) window.map.resize();
+                                
+                                // Set up search functionality
+                                setupLocationSearch();
+                            }, 2000);
+                        }
+                    }
+                });
+                
+            // Set up location search functionality
+            function setupLocationSearch() {
+                const searchInput = document.getElementById('location-search');
+                const searchButton = document.getElementById('search-button');
+                
+                if (searchInput && searchButton) {
+                    // Handle search button click
+                    searchButton.addEventListener('click', function() {
+                        searchLocation(searchInput.value);
+                    });
+                    
+                    // Handle enter key press
+                    searchInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            searchLocation(searchInput.value);
+                        }
+                    });
+                }
+                
+                // Set up location dropdown functionality
+                const locationSelect = document.getElementById('location-select');
+                if (locationSelect) {
+                    locationSelect.addEventListener('change', function(e) {
+                        const selectedLocation = e.target.value;
+                        console.log('Location dropdown changed to:', selectedLocation);
+                        
+                        // Predefined coordinates for common locations
+                        const locationCoordinates = {
+                            'Queretaro': [-100.3899, 20.5888],
+                            'Mexico City': [-99.1332, 19.4326]
+                        };
+                        
+                        if (locationCoordinates[selectedLocation]) {
+                            const coords = locationCoordinates[selectedLocation];
+                            
+                            // Update global coordinates
+                            window.circleCoordinates = coords;
+                            
+                            // Update the map view
+                            if (window.map) {
+                                window.map.flyTo({
+                                    center: coords,
+                                    essential: true,
+                                    zoom: 11
+                                });
+                                
+                                // Update the marker position
+                                if (window.marker) {
+                                    window.marker.setLngLat(coords);
+                                }
+                                
+                                // Redraw the circle
+                                if (typeof window.drawCircle === 'function') {
+                                    setTimeout(() => window.drawCircle(window.radius || 5), 500);
+                                }
+                                
+                                // Update location name display
+                                if (typeof window.getLocationName === 'function') {
+                                    window.getLocationName(coords);
+                                }
+                                
+                                // Load nearby drivers
+                                if (typeof loadNearbyDrivers === 'function') {
+                                    setTimeout(() => loadNearbyDrivers(coords[1], coords[0], window.radius || 5), 1000);
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Function to search for a location
+            function searchLocation(query) {
+                if (!query || query.trim() === '') return;
+                
+                // Show loading state
+                const searchInput = document.getElementById('location-search');
+                if (searchInput) searchInput.disabled = true;
+                
+                // Use the Mapbox Geocoding API to search for the location
+                fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}&limit=1`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.features && data.features.length > 0) {
+                            const location = data.features[0];
+                            const coordinates = location.center; // [longitude, latitude]
+                            
+                            // Update the global coordinates variable
+                            window.circleCoordinates = coordinates;
+                            
+                            // Update the map view
+                            if (window.map) {
+                                window.map.flyTo({
+                                    center: coordinates,
+                                    essential: true,
+                                    zoom: 11
+                                });
+                                
+                                // Update the marker position
+                                if (window.marker) {
+                                    window.marker.setLngLat(coordinates);
+                                }
+                                
+                                // Redraw the circle
+                                if (typeof window.drawCircle === 'function') {
+                                    setTimeout(() => window.drawCircle(window.radius || 5), 500);
+                                }
+                                
+                                // Update location name display
+                                if (typeof getLocationName === 'function') {
+                                    getLocationName(coordinates);
+                                }
+                                
+                                // Load nearby drivers
+                                if (typeof loadNearbyDrivers === 'function') {
+                                    setTimeout(() => loadNearbyDrivers(coordinates[1], coordinates[0], window.radius || 5), 1000);
+                                }
+                            }
+                        } else {
+                            showErrorToast('Location not found. Please try a different search term.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error searching for location:', error);
+                        showErrorToast('Error searching for location. Please try again.');
+                    })
+                    .finally(() => {
+                        // Reset loading state
+                        if (searchInput) searchInput.disabled = false;
+                    });
+            }
+            });
+            
+            const step2 = document.getElementById('step-2');
+            if (step2) {
+                observer.observe(step2, { attributes: true });
+                
+                // Also initialize if it's already visible
+                if (step2.style.display !== 'none') {
+                    console.log('Step 2 is already visible, initializing map');
+                    initializeMap();
+                }
+            }
+            
+            // Initialize anyway after a delay as a fallback
             setTimeout(function() {
                 initializeMap();
             }, 500);
@@ -2072,6 +3266,21 @@
             // Check if map is already initialized
             if (mapInitialized && map) {
                 console.log('Map already initialized, returning early');
+                
+                // If map exists but circle might not be drawn yet, trigger a redraw
+                setTimeout(function() {
+                    if (typeof window.drawCircle === 'function' && window.radius) {
+                        console.log('Map already initialized - drawing circle with radius:', window.radius);
+                        window.drawCircle(window.radius);
+                    }
+                    
+                    // Make driver count visible if it exists
+                    const driverCount = document.getElementById('driver-count');
+                    if (driverCount) {
+                        driverCount.style.display = 'block';
+                    }
+                }, 500);
+                
                 return;
             }
             
@@ -2080,8 +3289,48 @@
             if (!mapContainer) {
                 console.error('Map container not found');
                 showErrorToast('Map container not found. Please refresh the page.');
-                return;
+                
+                // Try to find the map container's parent
+                console.warn('Map container not found, will try to recreate it');
+                const mapParent = document.querySelector('.col-lg-7.order-lg-2');
+                
+                if (mapParent) {
+                    // Clear the parent and create a new map container
+                    mapParent.innerHTML = '';
+                    const newMapContainer = document.createElement('div');
+                    newMapContainer.id = 'map';
+                    newMapContainer.style.width = '100%';
+                    newMapContainer.style.height = '55vh';
+                    newMapContainer.style.display = 'block';
+                    newMapContainer.style.position = 'relative';
+                    newMapContainer.style.zIndex = '1';
+                    newMapContainer.style.border = '1px solid #ddd';
+                    
+                    // Add search and driver count elements
+                    const driverCountEl = document.createElement('div');
+                    driverCountEl.id = 'driver-count';
+                    driverCountEl.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 20;';
+                    driverCountEl.textContent = '0 drivers in area';
+                    mapParent.appendChild(driverCountEl);
+                    
+                    // Insert the new map container
+                    mapParent.appendChild(newMapContainer);
+                    console.log('Created new map container', newMapContainer);
+                    
+                    // Continue with map initialization with the new container
+                    return initializeMapCore(); // Try again with the new container
+                } else {
+                    console.error('Could not find map parent element');
+                    return;
+                }
             }
+            
+            // Ensure map container has the correct styles
+            mapContainer.style.width = '100%';
+            mapContainer.style.height = '70vh';
+            mapContainer.style.minHeight = '500px';
+            mapContainer.style.display = 'block';
+            mapContainer.style.position = 'relative';
             
             // Check if mapboxgl is loaded
             if (typeof mapboxgl === 'undefined') {
@@ -2109,6 +3358,18 @@
                 console.log('Creating new map instance in container:', mapContainer);
                 
                 // Create new map instance
+                console.log('About to create map with container:', mapContainer);
+                console.log('Container dimensions:', mapContainer.getBoundingClientRect());
+                console.log('Container is visible:', mapContainer.offsetParent !== null);
+                console.log('Container style:', mapContainer.style.cssText);
+                console.log('Container computed style height:', window.getComputedStyle(mapContainer).height);
+                
+                // Ensure container is visible
+                mapContainer.style.height = '400px';
+                mapContainer.style.width = '100%';
+                mapContainer.style.position = 'relative';
+                mapContainer.style.display = 'block';
+                
                 map = new mapboxgl.Map({
                     container: mapContainer, // Use the actual DOM element instead of ID
                     style: 'mapbox://styles/mapbox/streets-v11', // Map style
@@ -2120,8 +3381,128 @@
                 
                 console.log('Map instance created:', map);
                 
+                // Make driver count visible
+                const driverCount = document.getElementById('driver-count');
+                if (driverCount) {
+                    driverCount.style.display = 'block';
+                }
+                
+                // Set default radius if not already set
+                if (!window.radius) {
+                    window.radius = 5; // Default 5 miles radius
+                }
+                
+                // Set a default circle center if not already defined
+                if (!window.circleCoordinates || window.circleCoordinates[0] === 0) {
+                    window.circleCoordinates = [-99.1332, 19.4326]; // Mexico City
+                    console.log('Setting default circle coordinates:', window.circleCoordinates);
+                }
+                
+                // Create a marker immediately at the center
+                window.marker = new mapboxgl.Marker({
+                    draggable: true,
+                    color: '#3887be'
+                })
+                .setLngLat(window.circleCoordinates)
+                .addTo(map);
+                
+                // Add immediate event listener for style load to draw circle
+                map.once('style.load', function() {
+                    // Ensure we have circle coordinates (use map center if not set)
+                    if (!window.circleCoordinates || !Array.isArray(window.circleCoordinates)) {
+                        const center = map.getCenter();
+                        window.circleCoordinates = [center.lng, center.lat];
+                    }
+                    
+                    // Remove any existing markers first to ensure only one exists
+                    if (window.marker) {
+                        window.marker.remove();
+                    }
+                    
+                    // Create a new marker
+                    if (window.circleCoordinates) {
+                        window.marker = new mapboxgl.Marker({
+                            draggable: true,
+                            color: '#E02020',
+                            scale: 1.2 // Make it slightly larger for better visibility
+                        })
+                        .setLngLat(window.circleCoordinates)
+                        .addTo(map);
+                        
+                        // Add marker event listeners
+                        if (window.marker && typeof updateMarkerPosition === 'function') {
+                            window.marker.on('drag', updateMarkerPosition);
+                            window.marker.on('dragend', updateMarkerPosition);
+                        }
+                        
+                        console.log('Main ad marker created/updated at', window.circleCoordinates);
+                    }
+                    
+                    // Draw circle on a short timeout (helps with rendering issues)
+                    setTimeout(function() {
+                        if (typeof window.drawCircle === 'function') {
+                            window.drawCircle(window.radius || 5);
+                            
+                            // Wait a bit longer before loading drivers to ensure map is fully ready
+                            setTimeout(function() {
+                                // Load nearby drivers with proper coordinates
+                                if (typeof loadNearbyDrivers === 'function' && window.circleCoordinates) {
+                                    const lat = window.circleCoordinates[1];
+                                    const lng = window.circleCoordinates[0];
+                                    loadNearbyDrivers(lat, lng, window.radius || 5);
+                                }
+                            }, 300);
+                        }
+                    }, 300);
+                });
+                
                 // Set map variable to global scope to ensure it's accessible everywhere
                 window.campaignMap = map;
+                window.map = map; // Ensure window.map is also set for consistency
+                
+                // Check map visibility after initialization
+                setTimeout(function() {
+                    console.log('Map initialized, checking visibility again...');
+                    const mapEl = document.getElementById('map');
+                    
+                    if (!mapEl) {
+                        console.error('Map element not found after initialization!');
+                        return;
+                    }
+                    
+                    console.log('Map dimensions after init:', mapEl.getBoundingClientRect());
+                    console.log('Map canvas element:', document.querySelector('.mapboxgl-canvas'));
+                    
+                    if (document.querySelector('.mapboxgl-canvas')) {
+                        console.log('Canvas dimensions:', document.querySelector('.mapboxgl-canvas').getBoundingClientRect());
+                    }
+                    
+                    // Force a resize of the map
+                    if (map) {
+                        console.log('Forcing map resize...');
+                        map.resize();
+                        
+                        // Draw circle after resize
+                        setTimeout(function() {
+                            console.log('Circle redrawn after resize');
+                            if (typeof window.drawCircle === 'function') {
+                                window.drawCircle(window.radius || 5);
+                            }
+                            
+                            // Show driver count
+                            const driverCount = document.getElementById('driver-count');
+                            if (driverCount) {
+                                driverCount.textContent = "Finding nearby drivers...";
+                                driverCount.style.display = 'block';
+                            }
+                            
+                            // Load nearby drivers
+                            if (typeof loadNearbyDrivers === 'function' && window.circleCoordinates) {
+                                loadNearbyDrivers(window.circleCoordinates[1], window.circleCoordinates[0], window.radius || 5);
+                            }
+                        }, 500);
+                    }
+                }, 500);
                 
                 // Check if map was created properly
                 if (map) {
@@ -2158,31 +3539,60 @@
         }
         
         function setupMapFeatures() {
-            // Create a marker
-            marker = new mapboxgl.Marker({
-                    draggable: true // Make the marker draggable
+            // Remove any existing markers to prevent duplication
+            if (window.marker) {
+                window.marker.remove();
+                window.marker = null;
+                console.log('Removed existing marker');
+            }
+            
+            // Create a new marker and store it in window.marker for global access
+            window.marker = new mapboxgl.Marker({
+                    draggable: true, // Make the marker draggable
+                    color: '#E02020', // Red color for better visibility
+                    scale: 1.2 // Make it slightly larger
                 })
                 .setLngLat([-99.1332, 19.4326]) // Set marker position to Mexico City
                 .addTo(map); // Add marker to the map
+            
+            console.log('Created new main marker at [-99.1332, 19.4326]');
 
             // Setup marker event listeners
-            marker.on('dragend', updateMarkerPosition);
+            window.marker.on('dragend', updateMarkerPosition);
             
             // Setup map click event
-            map.on('click', function(e) {
-                const coordinates = e.lngLat;
-                console.log('Map clicked at:', coordinates);
+                map.on('click', function(e) {
+                    const coordinates = e.lngLat;
+                    console.log('Map clicked at:', coordinates);
+                    
+                    // Check if location is within Mexico
+                    if (isLocationInMexico(coordinates.lat, coordinates.lng)) {
+                        marker.setLngLat(coordinates);
+                        updateMarkerPosition();
+                    } else {
+                        showWarningToast('Please select a location within Mexico.');
+                    }
+                });
                 
-                // Check if location is within Mexico
-                if (isLocationInMexico(coordinates.lat, coordinates.lng)) {
-                    marker.setLngLat(coordinates);
-                    updateMarkerPosition();
-                } else {
-                    showWarningToast('Please select a location within Mexico.');
-                }
-            });
-            
-            // Draw initial circle
+                // Add debug info for map visibility
+                console.log('Map debug info:');
+                console.log('- Map container:', document.getElementById('map'));
+                console.log('- Map container dimensions:', document.getElementById('map').getBoundingClientRect());
+                console.log('- Map object initialized:', map);
+                console.log('- Map container visible:', document.getElementById('map').offsetParent !== null);
+                
+                // Add a visible debug indicator
+                const debugEl = document.createElement('div');
+                debugEl.style.position = 'absolute';
+                debugEl.style.bottom = '10px';
+                debugEl.style.left = '10px';
+                debugEl.style.backgroundColor = 'rgba(255,0,0,0.7)';
+                debugEl.style.color = 'white';
+                debugEl.style.padding = '5px 10px';
+                debugEl.style.borderRadius = '4px';
+                debugEl.style.zIndex = '9999';
+                debugEl.textContent = 'Map Debug: Active';
+                document.getElementById('map').appendChild(debugEl);            // Draw initial circle
             drawCircle(radius);
             
             // Load initial nearby drivers
@@ -2246,14 +3656,95 @@
                 });
         }
         
-        // Function to draw a circle on the map - delegates to global function
-        function drawCircle(radiusValue) {
-            console.log('Local drawCircle called, delegating to global implementation');
+        // Function to draw a circle on the map - using a different name to avoid recursion
+        function localDrawCircle(radiusValue) {
+            console.log('Local circle drawing function called with radius:', radiusValue);
             if (typeof window.drawCircle === 'function') {
+                // Call the global implementation
                 window.drawCircle(radiusValue);
             } else {
                 console.error('Global drawCircle function not found');
             }
+        }
+        
+        // Define the draw circle function if it doesn't exist
+        if (!window.drawCircle) {
+            window.drawCircle = function(radius) {
+                console.log('drawCircle called with radius:', radius);
+                
+                // If map isn't ready yet, wait a bit and try again
+                if (!window.map || !window.map.loaded()) {
+                    console.log('Map not ready yet for circle drawing, trying with fallback...');
+                    if (typeof window.drawCircleFallback === 'function') {
+                        window.drawCircleFallback(window.circleCoordinates, radius);
+                    } else {
+                        // Try again in a bit
+                        setTimeout(function() {
+                            window.drawCircle(radius);
+                        }, 1000);
+                    }
+                    return;
+                }
+                
+                try {
+                    console.log('Drawing circle with radius:', radius, 'coordinates:', window.circleCoordinates);
+                    
+                    // Clean up existing circle if any
+                    if (window.map.getSource('circle-source')) {
+                        window.map.removeLayer('circle-fill');
+                        window.map.removeLayer('circle-outline');
+                        window.map.removeSource('circle-source');
+                    }
+                    
+                    // Create circle using turf.js
+                    if (typeof turf === 'undefined') {
+                        console.error('Turf.js not available, trying alternate method');
+                        window.drawCircleFallback(window.circleCoordinates, radius);
+                        return;
+                    }
+                    
+                    const circleFeature = turf.circle(window.circleCoordinates, radius, {
+                        steps: 80,
+                        units: 'miles'
+                    });
+                    
+                    // Add circle to map
+                    window.map.addSource('circle-source', {
+                        type: 'geojson',
+                        data: circleFeature
+                    });
+                    
+                    // Add circle fill
+                    window.map.addLayer({
+                        id: 'circle-fill',
+                        type: 'fill',
+                        source: 'circle-source',
+                        paint: {
+                            'fill-color': '#3887be',
+                            'fill-opacity': 0.3
+                        }
+                    });
+                    
+                    // Add circle outline
+                    window.map.addLayer({
+                        id: 'circle-outline',
+                        type: 'line',
+                        source: 'circle-source',
+                        paint: {
+                            'line-color': '#3887be',
+                            'line-width': 2
+                        }
+                    });
+                    
+                    console.log('Circle drawn successfully with radius:', radius);
+                } catch (error) {
+                    console.error('Error drawing circle:', error);
+                    // Try fallback method
+                    if (typeof window.drawCircleFallback === 'function') {
+                        window.drawCircleFallback(window.circleCoordinates, radius);
+                    }
+                }
+            };
         }
         
         // Fallback function to draw a circle without Turf.js

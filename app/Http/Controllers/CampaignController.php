@@ -42,6 +42,15 @@ class CampaignController extends Controller
             
         return view('camplain-list', compact('campaigns'));
     }
+    
+    /**
+     * Display a listing of the campaigns.
+     * This is an alias for showCampaignList to maintain route compatibility.
+     */
+    public function index()
+    {
+        return $this->showCampaignList();
+    }
 
     /**
      * Store a new campaign.
@@ -204,6 +213,113 @@ class CampaignController extends Controller
             return back()->withErrors([
                 'error' => 'Failed to create campaign: ' . $e->getMessage()
             ])->withInput();
+        }
+    }
+
+    /**
+     * Get nearby drivers for campaign creation/editing maps
+     */
+    public function getNearbyDrivers(Request $request)
+    {
+        // Validate request parameters
+        $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'radius' => 'required|numeric|min:1|max:100',
+        ]);
+
+        try {
+            // Get parameters
+            $latitude = (float)$request->latitude;
+            $longitude = (float)$request->longitude;
+            $radius = (float)$request->radius;
+            
+            // Fallback to query parameters if request parameters are not found in JSON body
+            if (!$latitude && $request->has('latitude')) {
+                $latitude = (float)$request->query('latitude');
+            }
+            if (!$longitude && $request->has('longitude')) {
+                $longitude = (float)$request->query('longitude');
+            }
+            if (!$radius && $request->has('radius')) {
+                $radius = (float)$request->query('radius');
+            }
+            
+            Log::info('Fetching nearby drivers', [
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'radius' => $radius
+            ]);
+            
+            Log::info('Querying drivers with Haversine formula', [
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'radius' => $radius
+            ]);
+            
+            // Use Haversine formula to find drivers within radius
+            // 3959 is Earth's radius in miles
+            $drivers = \App\Models\Driver::selectRaw("
+                    id,
+                    name, 
+                    vehicle_number as vehicle,
+                    current_latitude as latitude,
+                    current_longitude as longitude,
+                    status,
+                    is_active,
+                    CASE 
+                        WHEN status = 'available' THEN '#4CAF50'
+                        WHEN status = 'busy' THEN '#FF9800'
+                        ELSE '#9E9E9E'
+                    END as status_color,
+                    (3959 * acos(cos(radians(?)) * cos(radians(current_latitude)) * 
+                    cos(radians(current_longitude) - radians(?)) + 
+                    sin(radians(?)) * sin(radians(current_latitude)))) AS distance,
+                    last_location_update
+                ", [$latitude, $longitude, $latitude])
+                ->whereNotNull('current_latitude')
+                ->whereNotNull('current_longitude')
+                ->where('last_location_update', '>=', now()->subHours(24))
+                ->having('distance', '<=', $radius)
+                ->orderBy('distance')
+                ->get()
+                ->map(function ($driver) {
+                    return [
+                        'id' => $driver->id,
+                        'name' => $driver->name,
+                        'vehicle' => $driver->vehicle,
+                        'latitude' => (float)$driver->latitude,
+                        'longitude' => (float)$driver->longitude,
+                        'status' => $driver->status,
+                        'is_active' => (bool)$driver->is_active,
+                        'status_color' => $driver->status_color,
+                        'distance' => round($driver->distance, 1),
+                        'last_update' => $driver->last_location_update ? 
+                                        $driver->last_location_update->diffForHumans() : 'Unknown'
+                    ];
+                });
+                
+            // Get total active drivers count for reference
+            $totalCount = \App\Models\Driver::where('last_location_update', '>=', now()->subHours(24))
+                ->whereNotNull('current_latitude')
+                ->whereNotNull('current_longitude')
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'drivers' => $drivers,
+                'total_count' => $totalCount
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching nearby drivers: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching nearby drivers: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

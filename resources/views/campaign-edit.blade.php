@@ -493,6 +493,58 @@
     /* Driver marker base styles */
     .driver-marker {
         will-change: transform, box-shadow;
+        width: 16px !important;
+        height: 16px !important;
+        border-radius: 50% !important;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.5) !important;
+        border: 2px solid white !important;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    /* Pulse animation for active markers */
+    .driver-marker.active {
+        animation: pulse 1.5s infinite;
+    }
+    
+    /* Driver marker popup styles */
+    .driver-popup {
+        padding: 5px;
+    }
+    
+    .driver-popup h6 {
+        font-weight: 600;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+    }
+    
+    .driver-popup .driver-details {
+        font-size: 12px;
+    }
+    
+    /* Loading indicator for map */
+    #map-loading-indicator {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 4px;
+        padding: 5px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Pulse animation keyframes */
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(0, 128, 0, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 8px rgba(0, 128, 0, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(0, 128, 0, 0);
+        }
     }
 </style>
 </head>
@@ -1050,10 +1102,23 @@
             const budgetInput = document.querySelector('input[name="daily_budget"]') || document.querySelector('.input-box');
             const selectedPackage = document.querySelector('input[name="package_id"]:checked');
             
-            if (!budgetInput || !selectedPackage) return;
+            if (!budgetInput || !selectedPackage) {
+                console.error('Missing budget input or selected package', {
+                    budgetInput: budgetInput,
+                    selectedPackage: selectedPackage
+                });
+                return;
+            }
             
             const budget = parseFloat(budgetInput.value) || 0;
             const costPerImpression = parseFloat(selectedPackage.dataset.costPerImpression) || 0;
+            
+            console.log('Updating impression counts:', {
+                budget: budget,
+                costPerImpression: costPerImpression,
+                packageId: selectedPackage.value,
+                dataAttributes: selectedPackage.dataset
+            });
             
             if (costPerImpression > 0 && budget > 0) {
                 // Calculate total impressions based on budget and cost per impression
@@ -1178,22 +1243,44 @@
                     // Set Mapbox access token
                     mapboxgl.accessToken = 'pk.eyJ1IjoibXVzdGFuc2lybWFrZGEiLCJhIjoiY20yYzNpd213MHJhNTJqcXduNjU4ZGFkdyJ9.qnsW91lfIZ1EniLcPlAEkQ';
                     
-                    // Create map
+                    // Define fallback coordinates (New York City) if initialLat/initialLng are invalid
+                    let centerCoords = [initialLng, initialLat];
+                    if (!initialLng || !initialLat || isNaN(initialLng) || isNaN(initialLat)) {
+                        console.warn('Invalid initial coordinates, using fallback location');
+                        centerCoords = [-73.935242, 40.730610]; // NYC as fallback
+                    }
+                    
+                    // Create map with robust options
                     window.map = new mapboxgl.Map({
                         container: 'map',
                         style: 'mapbox://styles/mapbox/streets-v11',
-                        center: [initialLng, initialLat],
-                        zoom: 10
+                        center: centerCoords,
+                        zoom: 10,
+                        minZoom: 2,
+                        maxZoom: 18,
+                        failIfMajorPerformanceCaveat: false,
+                        preserveDrawingBuffer: true
                     });
                     
-                    // Add map events
+                    // Add map events with retry mechanism
+                    let loadAttempts = 0;
+                    const maxAttempts = 3;
+                    
                     window.map.on('load', function() {
                         console.log('Map loaded successfully');
                         window.mapInitialized = true;
-                        window.setupMapFeatures();
+                        
+                        // Setup map features with error handling
+                        try {
+                            window.setupMapFeatures();
+                        } catch (e) {
+                            console.error('Error setting up map features:', e);
+                        }
                         
                         // Load drivers data after map initializes
-                        window.loadDriversData();
+                        setTimeout(() => {
+                            window.loadDriversData();
+                        }, 1000); // Add a small delay to ensure map is fully ready
                     });
                     
                     // Add error handler
@@ -1378,60 +1465,167 @@
         // Load and display drivers as pins on the map
         window.loadDriversData = function() {
             try {
+                // Initialize driver markers array if it doesn't exist
+                if (!window.driverMarkers) {
+                    window.driverMarkers = [];
+                }
+                
                 // Clear existing driver markers
-                if (window.driverMarkers && window.driverMarkers.length > 0) {
-                    window.driverMarkers.forEach(marker => marker.remove());
+                if (window.driverMarkers.length > 0) {
+                    window.driverMarkers.forEach(marker => {
+                        try {
+                            marker.remove();
+                        } catch (err) {
+                            console.warn('Could not remove marker:', err);
+                        }
+                    });
                     window.driverMarkers = [];
                 }
                 
                 if (!window.map || !window.mapInitialized) {
-                    console.log('Map not initialized yet, skipping driver data load');
+                    console.log('Map not initialized yet, scheduling retry in 2 seconds');
+                    setTimeout(() => window.loadDriversData(), 2000);
                     return;
                 }
                 
-                const lng = window.circleCoordinates[0];
-                const lat = window.circleCoordinates[1];
+                // Use current map center if circle coordinates not defined
+                let lng, lat;
+                if (window.circleCoordinates && window.circleCoordinates.length === 2) {
+                    lng = window.circleCoordinates[0];
+                    lat = window.circleCoordinates[1];
+                } else {
+                    const center = window.map.getCenter();
+                    lng = center.lng;
+                    lat = center.lat;
+                    // Store for later use
+                    window.circleCoordinates = [lng, lat];
+                }
+                
                 const radius = window.radius || 5;
                 
                 console.log('Loading driver data near:', lng, lat, 'with radius:', radius);
                 
-                // Make API request to get drivers
-                fetch(`/api/drivers/nearby?longitude=${lng}&latitude=${lat}&radius=${radius}`)
-                    .then(response => response.json())
+                // Add loading indicator
+                const loadingEl = document.createElement('div');
+                loadingEl.id = 'map-loading-indicator';
+                loadingEl.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+                loadingEl.style.position = 'absolute';
+                loadingEl.style.top = '10px';
+                loadingEl.style.right = '10px';
+                loadingEl.style.zIndex = '1000';
+                document.getElementById('map').appendChild(loadingEl);
+                
+                // Make API request to get drivers with timeout
+                const fetchTimeout = setTimeout(() => {
+                    console.warn('Driver fetch request timed out');
+                    if (loadingEl.parentNode) {
+                        loadingEl.parentNode.removeChild(loadingEl);
+                    }
+                }, 20000); // 20 second timeout
+                
+                fetch(`/api/campaigns/nearby-drivers?longitude=${lng}&latitude=${lat}&radius=${radius}`)
+                    .then(response => {
+                        clearTimeout(fetchTimeout);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
+                        // Remove loading indicator
+                        const loadingEl = document.getElementById('map-loading-indicator');
+                        if (loadingEl && loadingEl.parentNode) {
+                            loadingEl.parentNode.removeChild(loadingEl);
+                        }
+                        
                         if (data.success && data.drivers) {
                             console.log(`Found ${data.drivers.length} drivers within ${radius} miles`);
                             
                             // Add markers for each driver
                             data.drivers.forEach(driver => {
-                                // Create custom driver marker
-                                const el = document.createElement('div');
-                                el.className = 'driver-marker';
-                                el.style.backgroundColor = '#4CAF50';
-                                el.style.width = '14px';
-                                el.style.height = '14px';
-                                el.style.borderRadius = '50%';
-                                el.style.border = '2px solid #fff';
-                                
-                                const marker = new mapboxgl.Marker(el)
-                                    .setLngLat([driver.longitude, driver.latitude])
-                                    .setPopup(new mapboxgl.Popup({ offset: 25 })
-                                        .setHTML(`<h5>Driver ID: ${driver.id}</h5><p>Name: ${driver.name || 'Unknown'}</p>`))
-                                    .addTo(window.map);
-                                
-                                window.driverMarkers.push(marker);
+                                try {
+                                    // Create custom driver marker
+                                    const el = document.createElement('div');
+                                    el.className = 'driver-marker';
+                                    
+                                    // Use status color or default to green
+                                    const color = driver.status_color || '#4CAF50';
+                                    
+                                    // Style the marker
+                                    el.style.backgroundColor = color;
+                                    el.style.width = '16px';
+                                    el.style.height = '16px';
+                                    el.style.borderRadius = '50%';
+                                    el.style.border = '2px solid #fff';
+                                    el.style.boxShadow = '0 0 5px rgba(0,0,0,0.3)';
+                                    
+                                    // Create popup HTML with more information
+                                    const popupHtml = `
+                                        <div class="driver-popup">
+                                            <h6 style="margin-bottom: 5px;"><i class="fas fa-car"></i> Driver #${driver.id}</h6>
+                                            <div class="driver-details">
+                                                <p style="margin-bottom: 3px;"><strong>Name:</strong> ${driver.name || 'Unknown'}</p>
+                                                <p style="margin-bottom: 3px;"><strong>Vehicle:</strong> ${driver.vehicle || 'N/A'}</p>
+                                                <p style="margin-bottom: 3px;"><strong>Status:</strong> <span style="color: ${color}">${driver.status || 'Unknown'}</span></p>
+                                                <p style="margin-bottom: 3px;"><strong>Distance:</strong> ${driver.distance ? driver.distance + ' mi' : 'Unknown'}</p>
+                                                <p style="margin-bottom: 0;"><strong>Last Update:</strong> ${driver.last_update || 'Unknown'}</p>
+                                            </div>
+                                        </div>
+                                    `;
+                                    
+                                    // Create and add marker to map
+                                    const marker = new mapboxgl.Marker(el)
+                                        .setLngLat([driver.longitude, driver.latitude])
+                                        .setPopup(new mapboxgl.Popup({ offset: 25 })
+                                            .setHTML(popupHtml))
+                                        .addTo(window.map);
+                                    
+                                    window.driverMarkers.push(marker);
+                                } catch (err) {
+                                    console.warn('Error creating marker for driver:', driver.id, err);
+                                }
                             });
                             
                             // Update driver count display
                             if (document.getElementById('driver-count')) {
                                 document.getElementById('driver-count').textContent = data.drivers.length;
                             }
+                            
+                            // Highlight the area with drivers if there are any
+                            if (data.drivers.length > 0 && window.map && window.drawCircle) {
+                                window.drawCircle();
+                            }
                         } else {
                             console.error('Error loading driver data:', data.message || 'Unknown error');
+                            
+                            // Show error message to user
+                            if (document.getElementById('driver-count')) {
+                                document.getElementById('driver-count').textContent = 'Error loading drivers';
+                            }
                         }
                     })
                     .catch(error => {
                         console.error('Error fetching driver data:', error);
+                        
+                        // Remove loading indicator
+                        const loadingEl = document.getElementById('map-loading-indicator');
+                        if (loadingEl && loadingEl.parentNode) {
+                            loadingEl.parentNode.removeChild(loadingEl);
+                        }
+                        
+                        // Show error message to user
+                        if (document.getElementById('driver-count')) {
+                            document.getElementById('driver-count').textContent = 'Failed to load';
+                        }
+                        
+                        // Retry once after a delay
+                        if (!window.driverLoadRetried) {
+                            window.driverLoadRetried = true;
+                            setTimeout(() => {
+                                console.log('Retrying driver data load...');
+                                window.loadDriversData();
+                            }, 5000);
+                        }
                     });
             } catch(e) {
                 console.error('Error loading driver data:', e);
@@ -1440,20 +1634,41 @@
         
         // Draw circle with given radius
         window.drawCircle = function(radius) {
+            // Check for recursion prevention
+            if (window._drawingCircle) {
+                console.warn('Preventing recursive drawCircle call');
+                return;
+            }
+            
+            // Set recursion guard flag
+            window._drawingCircle = true;
+            
             try {
                 console.log('Drawing circle with radius:', radius);
                 window.radius = radius;
                 
+                // Safety check for map
+                if (!window.map || !window.map.loaded()) {
+                    console.warn('Map not ready yet, skipping circle drawing');
+                    window._drawingCircle = false;
+                    return;
+                }
+                
                 // Remove existing circle source and layer if they exist
-                if (window.map && window.map.getSource('circle-source')) {
-                    window.map.removeLayer('circle-fill');
-                    window.map.removeLayer('circle-outline');
-                    window.map.removeSource('circle-source');
+                try {
+                    if (window.map && window.map.getSource('circle-source')) {
+                        window.map.removeLayer('circle-fill');
+                        window.map.removeLayer('circle-outline');
+                        window.map.removeSource('circle-source');
+                    }
+                } catch (layerError) {
+                    console.warn('Error removing existing layers:', layerError);
                 }
                 
                 // Check if turf is defined
                 if (typeof turf === 'undefined') {
                     console.error('Turf.js is not loaded yet');
+                    window._drawingCircle = false;
                     window.drawCircleFallback(window.circleCoordinates, radius);
                     return;
                 }
@@ -1504,6 +1719,9 @@
             } catch(e) {
                 console.error('Error in drawCircle:', e);
                 window.drawCircleFallback(window.circleCoordinates, radius);
+            } finally {
+                // Always clear the recursion guard
+                window._drawingCircle = false;
             }
         };
                 console.error('Mapbox GL JS not loaded');

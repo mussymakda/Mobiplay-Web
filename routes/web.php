@@ -1,15 +1,7 @@
 <?php
-<<<<<<< HEAD
 
 use App\Http\Controllers\AnalyticsController;
-=======
 use App\Http\Controllers\DriverController;
-use App\Http\Controllers\EditProfileController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\CampaignController;
-use Illuminate\Support\Facades\Route;
->>>>>>> bdd4171edc9db61cf35e2c93be6fc2724fe5c370
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DriverRegistrationController;
@@ -225,9 +217,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
 
     // API endpoint for nearby drivers
-    Route::get('api/campaigns/nearby-drivers', [CampaignController::class, 'getNearbyDrivers'])->name('campaigns.nearby-drivers');
+    Route::get('api/campaigns/nearby-drivers', [CampaignController::class, 'getNearbyDrivers'])
+        ->name('campaigns.nearby-drivers')
+        ->middleware('web');
 });
->>>>>>> bdd4171edc9db61cf35e2c93be6fc2724fe5c370
 
 Route::get('about-us', function () {
     return view('about-us');
