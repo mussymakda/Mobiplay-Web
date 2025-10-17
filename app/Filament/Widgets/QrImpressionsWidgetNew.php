@@ -9,10 +9,13 @@ use Filament\Widgets\ChartWidget;
 class QrImpressionsWidgetNew extends ChartWidget
 {
     protected static ?string $heading = 'QR Scans & Impressions Over Time';
+
     protected static ?int $sort = 3;
+
     protected static ?string $maxHeight = '400px';
+
     protected int|string|array $columnSpan = 1;
-    
+
     protected function getType(): string
     {
         return 'line';

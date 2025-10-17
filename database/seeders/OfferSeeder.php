@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Offer;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class OfferSeeder extends Seeder
 {
@@ -32,7 +32,7 @@ class OfferSeeder extends Seeder
                     'Minimum deposit of $3000 required',
                     'Maximum bonus amount is $3000',
                     'Bonus funds must be used within 30 days',
-                    'Cannot be combined with other offers'
+                    'Cannot be combined with other offers',
                 ],
             ],
             [
@@ -53,7 +53,7 @@ class OfferSeeder extends Seeder
                     'Minimum reload deposit of $100',
                     'Maximum bonus of $250 per reload',
                     'Limited to 1 use per user per month',
-                    'Bonus expires in 14 days if unused'
+                    'Bonus expires in 14 days if unused',
                 ],
             ],
             [
@@ -74,7 +74,7 @@ class OfferSeeder extends Seeder
                     'Minimum deposit of $200 required',
                     'Fixed bonus of $75',
                     'Limited to 50 total uses',
-                    'Cannot be combined with reload bonuses'
+                    'Cannot be combined with reload bonuses',
                 ],
             ],
             [
@@ -95,7 +95,7 @@ class OfferSeeder extends Seeder
                     'Minimum deposit of $1000 required',
                     'Maximum bonus of $1000',
                     'Limited to 25 total uses',
-                    'VIP account status may be required'
+                    'VIP account status may be required',
                 ],
             ],
             [
@@ -114,7 +114,7 @@ class OfferSeeder extends Seeder
                 'conditions' => [
                     'Summer promotional offer',
                     'Valid from June to July only',
-                    'Now expired and inactive'
+                    'Now expired and inactive',
                 ],
             ],
             [
@@ -134,7 +134,7 @@ class OfferSeeder extends Seeder
                     'Special Black Friday promotion',
                     'Available only during Black Friday weekend',
                     'Highest bonus percentage of the year',
-                    'Limited quantity - first come, first served'
+                    'Limited quantity - first come, first served',
                 ],
             ],
         ];
@@ -143,6 +143,6 @@ class OfferSeeder extends Seeder
             Offer::create($offerData);
         }
 
-        $this->command->info('Created ' . count($offers) . ' sample offers');
+        $this->command->info('Created '.count($offers).' sample offers');
     }
 }

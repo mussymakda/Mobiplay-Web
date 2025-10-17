@@ -26,8 +26,48 @@
       cb(start, end);
     });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script type="text/javascript" src="{{ asset('assets/js/script.js') }}"></script>
 
+  <script type="text/javascript">
+    $(document).ready(function() {
+      $('.logout-btn').click(function() {
+        const btn = $(this);
+        const originalText = btn.text();
 
-  
+        // Disable button and show loading state
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Logging out...');
+
+        $.ajax({
+          url: '{{ route('logout') }}',
+          type: 'POST',
+          data: {
+            _token: '{{ csrf_token() }}'
+          },
+          success: function(response) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: response.message,
+              showConfirmButton: false,
+              timer: 1500
+            }).then(function() {
+              window.location.href = response.redirect;
+            });
+          },
+          error: function(xhr) {
+            // Reset button state
+            btn.prop('disabled', false).text(originalText);
+            
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to logout. Please try again.'
+            });
+          }
+        });
+      });
+    });
+  </script>
+
   @yield('script')

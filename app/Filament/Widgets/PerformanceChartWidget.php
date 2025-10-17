@@ -2,7 +2,6 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Ad;
 use App\Models\Impression;
 use App\Models\Payment;
 use Carbon\Carbon;
@@ -11,9 +10,9 @@ use Filament\Widgets\ChartWidget;
 class PerformanceChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Performance Trends';
-    
+
     protected static ?int $sort = 4;
-    
+
     protected function getData(): array
     {
         $days = 14; // Show data for the last 14 days
@@ -21,24 +20,24 @@ class PerformanceChartWidget extends ChartWidget
         $impressionData = [];
         $qrScanData = [];
         $revenueData = [];
-        
+
         // Generate dates for the chart
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
             $labels[] = $date->format('M d');
-            
+
             // Get impression counts
             $impressionCount = Impression::whereDate('created_at', $date->format('Y-m-d'))
                 ->where('type', Impression::TYPE_DISPLAY)
                 ->count();
             $impressionData[] = $impressionCount;
-            
+
             // Get QR scan counts
             $qrScanCount = Impression::whereDate('created_at', $date->format('Y-m-d'))
                 ->where('type', Impression::TYPE_QR_SCAN)
                 ->count();
             $qrScanData[] = $qrScanCount;
-            
+
             // Get revenue (deposits)
             $dailyRevenue = Payment::whereDate('created_at', $date->format('Y-m-d'))
                 ->where('type', Payment::TYPE_DEPOSIT)
@@ -46,7 +45,7 @@ class PerformanceChartWidget extends ChartWidget
                 ->sum('amount');
             $revenueData[] = round($dailyRevenue, 2);
         }
-        
+
         return [
             'datasets' => [
                 [
@@ -78,12 +77,12 @@ class PerformanceChartWidget extends ChartWidget
             'labels' => $labels,
         ];
     }
-    
+
     protected function getType(): string
     {
         return 'line';
     }
-    
+
     protected function getOptions(): array
     {
         return [

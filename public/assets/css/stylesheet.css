@@ -257,10 +257,36 @@ a.back-btn{
 .otp {
     display: flex;
     max-width: 236px;
+    gap: 10px;
 }
-.otp .form-control{
-	margin-right: 10px;
-	text-align: center;
+.otp .form-control {
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    background: #fff;
+    border: 2px solid #CBCBCB;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+.otp .form-control:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    outline: none;
+}
+.otp .form-control:hover {
+    border-color: #999;
+}
+/* Remove spinner buttons for number inputs */
+.otp .form-control::-webkit-outer-spin-button,
+.otp .form-control::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+/* Firefox */
+.otp .form-control[type=number] {
+    -moz-appearance: textfield;
 }
 .sub-auth{
 	font-size: 18px;

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\DepositService;
-use App\Models\User;
 use App\Models\Payment;
-use Illuminate\Http\Request;
+use App\Models\User;
+use App\Services\DepositService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
@@ -32,19 +32,19 @@ class PaymentController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
             $user = User::findOrFail($request->user_id);
-            
+
             // In a real application, you would create a Stripe Payment Intent here
-            $stripePaymentId = 'pi_' . uniqid() . '_demo';
-            
+            $stripePaymentId = 'pi_'.uniqid().'_demo';
+
             $payment = $this->depositService->processDeposit($user, $request->amount, [
                 'stripe_payment_id' => $stripePaymentId,
-                'stripe_customer_id' => $user->stripe_customer_id ?? ('cus_' . uniqid()),
+                'stripe_customer_id' => $user->stripe_customer_id ?? ('cus_'.uniqid()),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
             ]);
@@ -69,7 +69,7 @@ class PaymentController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create deposit: ' . $e->getMessage()
+                'message' => 'Failed to create deposit: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -86,13 +86,13 @@ class PaymentController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
             $payment = Payment::findOrFail($request->payment_id);
-            
+
             if ($this->depositService->completeDeposit($payment)) {
                 return response()->json([
                     'success' => true,
@@ -101,19 +101,19 @@ class PaymentController extends Controller
                         'balance' => $payment->user->balance,
                         'bonus_balance' => $payment->user->bonus_balance,
                         'total_balance' => $payment->user->total_balance,
-                    ]
+                    ],
                 ]);
             }
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to complete deposit'
+                'message' => 'Failed to complete deposit',
             ], 400);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to complete deposit: ' . $e->getMessage()
+                'message' => 'Failed to complete deposit: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -133,13 +133,13 @@ class PaymentController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
             $user = User::findOrFail($request->user_id);
-            
+
             $payment = $this->depositService->processAdSpend($user, $request->amount, [
                 'campaign_id' => $request->campaign_id,
                 'campaign_name' => $request->campaign_name,
@@ -165,7 +165,7 @@ class PaymentController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -182,7 +182,7 @@ class PaymentController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -199,7 +199,7 @@ class PaymentController extends Controller
                 'formatted_total_balance' => $user->formatted_total_balance,
                 'auto_debit_enabled' => $user->auto_debit_enabled,
                 'auto_debit_threshold' => $user->auto_debit_threshold,
-            ]
+            ],
         ]);
     }
 }

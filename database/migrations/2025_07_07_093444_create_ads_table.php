@@ -30,7 +30,7 @@ return new class extends Migration
             $table->integer('impressions')->default(0); // Number of times shown on screens
             $table->integer('qr_scans')->default(0); // Number of QR code scans
             $table->timestamps();
-            
+
             $table->index(['user_id', 'status']);
             $table->index(['latitude', 'longitude']);
             $table->index('status');

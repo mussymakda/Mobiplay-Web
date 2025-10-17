@@ -1,0 +1,25 @@
+/* Add these styles at the end of the file */
+.btn.btn-primary:disabled,
+.btn.btn-primary.disabled,
+.btn.btn-primary[disabled] {
+    background-color: #000;
+    border-color: #000;
+    color: #fff;
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.btn.btn-primary:disabled:hover,
+.btn.btn-primary.disabled:hover,
+.btn.btn-primary[disabled]:hover {
+    background-color: #000;
+    border-color: #000;
+    color: #fff;
+}
+
+.btn.btn-primary.loading,
+.btn.btn-primary.loading:hover {
+    background-color: #000 !important;
+    border-color: #000 !important;
+    color: #fff !important;
+}

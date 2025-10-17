@@ -1,0 +1,252 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Mail\OtpMail;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
+
+class AuthController extends Controller
+{
+    /**
+     * Show the signup form
+     */
+    public function showSignupForm()
+    {
+        if (Auth::check()) {
+            return redirect()->intended('dashboard');
+        }
+        return view('signup');
+    }
+
+    /**
+     * Handle the signup request
+     */
+    public function signup(Request $request)
+    {
+        try {
+            // Validate the incoming request
+            $validatedData = $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'password' => [
+                    'required',
+                    'string',
+                    'min:8',
+                    'confirmed',
+                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/'
+                ],
+                'account_type' => 'required|string|in:advertiser,agency'
+            ], [
+                'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
+            ]);
+
+            // Generate OTP
+            $otp = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+
+            try {
+                // Send OTP email
+                Mail::to($validatedData['email'])->send(
+                    new OtpMail($otp, $validatedData['first_name'], $validatedData['last_name'])
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to send OTP email: ' . $e->getMessage());
+                throw ValidationException::withMessages([
+                    'email' => ['Failed to send verification code. Please try again.']
+                ]);
+            }
+
+            // Store signup data in session with expiry
+            Session::put('signup_data', [
+                'first_name' => $validatedData['first_name'],
+                'last_name' => $validatedData['last_name'],
+                'email' => $validatedData['email'],
+                'password' => Hash::make($validatedData['password']),
+                'account_type' => $validatedData['account_type'],
+                'otp' => $otp,
+                'attempts' => 0,
+                'expires_at' => now()->addMinutes(10)
+            ]);
+
+            return response()->json([
+                'message' => 'Verification code sent to your email.',
+                'email' => substr_replace($validatedData['email'], '***', 1, strpos($validatedData['email'], '@') - 2)
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Signup error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'An error occurred during signup. Please try again.'
+            ], 500);
+        }
+    }
+    public function driverLogin(Request $request)
+    {
+        // Validate request
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        // Authenticate driver
+        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+            $driver = Auth::user();
+            return response()->json(['message' => 'Login successful', 'driver' => $driver], 200);
+        }
+
+        return response()->json(['message' => 'Invalid credentials'], 401);
+    }
+
+    // Verify OTP
+    /**
+     * Verify the OTP and complete registration
+     */
+    public function verifyOtp(Request $request)
+    {
+        try {
+            // Validate OTP format
+            $request->validate([
+                'otp' => 'required|string|size:4',
+            ]);
+
+            // Get signup data from session
+            $signupData = Session::get('signup_data');
+            
+            if (!$signupData || now()->isAfter($signupData['expires_at'])) {
+                Session::forget('signup_data');
+                throw ValidationException::withMessages([
+                    'otp' => ['Verification code has expired. Please try again.']
+                ]);
+            }
+
+            // Check remaining attempts
+            if ($signupData['attempts'] >= 3) {
+                Session::forget('signup_data');
+                throw ValidationException::withMessages([
+                    'otp' => ['Too many invalid attempts. Please restart the signup process.']
+                ]);
+            }
+
+            // Increment attempts
+            $signupData['attempts']++;
+            Session::put('signup_data', $signupData);
+
+            // Verify OTP
+            if ($request->otp !== $signupData['otp']) {
+                throw ValidationException::withMessages([
+                    'otp' => ['Invalid verification code. ' . (3 - $signupData['attempts']) . ' attempts remaining.']
+                ]);
+            }
+
+            // Create the user
+            $user = User::create([
+                'name' => $signupData['first_name'] . ' ' . $signupData['last_name'],
+                'email' => $signupData['email'],
+                'password' => $signupData['password'], // Already hashed in signup
+                'account_type' => $signupData['account_type'],
+                'email_verified_at' => now(),
+            ]);
+
+            // Clear signup session data
+            Session::forget('signup_data');
+
+            // Log the user in
+            Auth::login($user);
+
+            // Return success response
+            return response()->json([
+                'message' => 'Registration completed successfully!',
+                'redirect' => route('dashboard')
+            ], 201);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('OTP verification error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'An error occurred during verification. Please try again.'
+            ], 500);
+        }
+    }
+    }
+
+    /**
+     * Show login form
+     */
+    public function showLoginForm()
+    {
+        if (Auth::check()) {
+            return redirect()->intended('dashboard');
+        }
+        return view('login');
+    }
+
+    /**
+     * Handle login request
+     */
+    public function login(Request $request)
+    {
+        try {
+            $credentials = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|string'
+            ]);
+
+            $remember = $request->boolean('remember');
+
+            if (!Auth::attempt($credentials, $remember)) {
+                throw ValidationException::withMessages([
+                    'email' => ['These credentials do not match our records.']
+                ]);
+            }
+
+            $request->session()->regenerate();
+
+            return response()->json([
+                'message' => 'Login successful',
+                'redirect' => route('dashboard')
+            ]);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'An error occurred during login. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle logout request
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json([
+            'message' => 'Logged out successfully',
+            'redirect' => route('login')
+        ]);
+    }
+}

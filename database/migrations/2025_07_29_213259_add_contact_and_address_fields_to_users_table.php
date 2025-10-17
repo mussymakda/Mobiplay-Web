@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             // Contact information
             $table->string('phone_number')->nullable()->after('email');
-            
+
             // Address fields
             $table->string('address_line1')->nullable()->after('auto_debit_threshold');
             $table->string('address_line2')->nullable()->after('address_line1');
@@ -38,7 +38,7 @@ return new class extends Migration
                 'city',
                 'state_province',
                 'postal_code',
-                'country'
+                'country',
             ]);
         });
     }

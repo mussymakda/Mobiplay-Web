@@ -34,24 +34,24 @@ class Package extends Model
     // Get formatted cost per impression
     public function getFormattedCostAttribute()
     {
-        return '$' . number_format($this->cost_per_impression, 4);
+        return '$'.number_format($this->cost_per_impression, 4);
     }
 
     // Get formatted cost per QR scan
     public function getFormattedQrCostAttribute()
     {
-        return '$' . number_format($this->cost_per_qr_scan, 4);
+        return '$'.number_format($this->cost_per_qr_scan, 4);
     }
 
     // Get formatted ad showing conditions
     public function getFormattedConditionsAttribute()
     {
-        if (!$this->ad_showing_conditions) {
+        if (! $this->ad_showing_conditions) {
             return 'No conditions set';
         }
-        
+
         $conditions = collect($this->ad_showing_conditions)->map(function ($condition) {
-            return match($condition) {
+            return match ($condition) {
                 'rush_hours' => 'Rush Hours',
                 'normal_hours' => 'Normal Hours',
                 'holidays' => 'Holidays',
@@ -67,7 +67,7 @@ class Package extends Model
     {
         return [
             'rush_hours' => 'Rush Hours',
-            'normal_hours' => 'Normal Hours', 
+            'normal_hours' => 'Normal Hours',
             'holidays' => 'Holidays',
         ];
     }

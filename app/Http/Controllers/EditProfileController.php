@@ -1,12 +1,11 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use App\Models\User; // Assuming you're using the User model
+use Illuminate\Support\Facades\Storage; // Assuming you're using the User model
 
 class EditProfileController extends Controller
 {
@@ -14,7 +13,7 @@ class EditProfileController extends Controller
     {
         // Get the authenticated user
         $user = Auth::user();
-    
+
         // Pass user data to the view
         return view('edit', [
             'name' => $user->name,
@@ -45,7 +44,7 @@ class EditProfileController extends Controller
             'country' => 'nullable|string|max:255',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Profile image validation
         ]);
-    
+
         // Get the authenticated user
         $user = Auth::user();
 
@@ -55,14 +54,14 @@ class EditProfileController extends Controller
             if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
                 Storage::disk('public')->delete($user->profile_image);
             }
-            
+
             // Store new profile image
             $imagePath = $request->file('profile_image')->store('profile-images', 'public');
             $user->profile_image = $imagePath;
         }
-    
+
         // Update user information
-        $user->name = $request->first_name . ' ' . $request->last_name; // Concatenate first and last names
+        $user->name = $request->first_name.' '.$request->last_name; // Concatenate first and last names
         $user->email = $request->email;
         $user->phone_number = $request->phone_number; // Update phone number
         $user->address_line1 = $request->address_line1;
@@ -71,10 +70,10 @@ class EditProfileController extends Controller
         $user->state_province = $request->state_province;
         $user->postal_code = $request->postal_code;
         $user->country = $request->country;
-    
+
         // Save changes
         $user->save();
-    
+
         // Redirect back with a success message
         return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
     }
@@ -93,7 +92,7 @@ class EditProfileController extends Controller
         if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
             Storage::disk('public')->delete($user->profile_image);
         }
-        
+
         // Store new profile image
         $imagePath = $request->file('profile_image')->store('profile-images', 'public');
         $user->profile_image = $imagePath;
@@ -102,6 +101,4 @@ class EditProfileController extends Controller
         // Redirect back with a success message
         return redirect()->route('profile')->with('success', 'Profile photo updated successfully.');
     }
-    
-    
 }

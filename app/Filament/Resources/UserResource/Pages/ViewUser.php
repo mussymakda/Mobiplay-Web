@@ -3,12 +3,11 @@
 namespace App\Filament\Resources\UserResource\Pages;
 
 use App\Filament\Resources\UserResource;
-use App\Models\Payment;
 use App\Models\Ad;
 use Filament\Actions;
-use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Pages\ViewRecord;
 
 class ViewUser extends ViewRecord
 {
@@ -32,15 +31,15 @@ class ViewUser extends ViewRecord
                             ->schema([
                                 Infolists\Components\TextEntry::make('balance')
                                     ->label('Main Balance')
-                                    ->formatStateUsing(fn ($state) => '$' . number_format($state, 2)),
+                                    ->formatStateUsing(fn ($state) => '$'.number_format($state, 2)),
                                 Infolists\Components\TextEntry::make('bonus_balance')
                                     ->label('Bonus Balance')
-                                    ->formatStateUsing(fn ($state) => '$' . number_format($state, 2)),
+                                    ->formatStateUsing(fn ($state) => '$'.number_format($state, 2)),
                                 Infolists\Components\TextEntry::make('total_balance')
                                     ->label('Total Balance')
-                                    ->formatStateUsing(fn ($state) => '$' . number_format($state, 2))
+                                    ->formatStateUsing(fn ($state) => '$'.number_format($state, 2))
                                     ->color('success'),
-                            ])
+                            ]),
                     ])
                     ->collapsible(),
 
@@ -57,7 +56,8 @@ class ViewUser extends ViewRecord
                                                 ->where('type', 'ad_spend')
                                                 ->where('status', 'completed')
                                                 ->sum('amount');
-                                            return '$' . number_format(abs($spent), 2);
+
+                                            return '$'.number_format(abs($spent), 2);
                                         } catch (\Exception $e) {
                                             return '$0.00';
                                         }
@@ -82,11 +82,10 @@ class ViewUser extends ViewRecord
                                         }
                                     })
                                     ->color('success'),
-                            ])
+                            ]),
                     ])
                     ->collapsible(),
-                
-              
+
                 Infolists\Components\Section::make('User Information')
                     ->schema([
                         Infolists\Components\Grid::make(2)
@@ -108,7 +107,7 @@ class ViewUser extends ViewRecord
                                 Infolists\Components\TextEntry::make('stripe_customer_id')
                                     ->label('Stripe Customer ID')
                                     ->placeholder('Not set'),
-                            ])
+                            ]),
                     ]),
 
                 // Auto-Debit Settings
@@ -122,8 +121,8 @@ class ViewUser extends ViewRecord
                                     ->badge(),
                                 Infolists\Components\TextEntry::make('auto_debit_threshold')
                                     ->label('Auto-Debit Threshold')
-                                    ->formatStateUsing(fn ($state) => $state ? '$' . number_format($state, 2) : 'Not set'),
-                            ])
+                                    ->formatStateUsing(fn ($state) => $state ? '$'.number_format($state, 2) : 'Not set'),
+                            ]),
                     ]),
             ]);
     }

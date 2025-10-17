@@ -3,7 +3,6 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Impression;
-use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
@@ -11,15 +10,18 @@ use Illuminate\Support\Facades\DB;
 class QrImpressionsComparisonWidget extends ChartWidget
 {
     protected static ?string $heading = 'QR Scans vs Impressions';
+
     protected static ?int $sort = 3;
+
     protected int|string|array $columnSpan = 2;
+
     protected static ?string $maxHeight = '300px';
 
     protected function getType(): string
     {
         return 'line';
     }
-    
+
     protected function getOptions(): array
     {
         return [
@@ -135,11 +137,11 @@ class QrImpressionsComparisonWidget extends ChartWidget
     {
         $period = $this->getPeriod();
         $dates = [];
-        
+
         foreach ($period as $date) {
             $dates[] = $date->format('M d');
         }
-        
+
         return $dates;
     }
 

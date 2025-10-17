@@ -11,15 +11,18 @@ use Illuminate\Support\Facades\DB;
 class ImpressionsChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Monthly Impressions';
+
     protected static ?int $sort = 2;
+
     protected int|string|array $columnSpan = 2;
+
     protected static ?string $maxHeight = '300px';
 
     protected function getType(): string
     {
         return 'bar';
     }
-    
+
     protected function getOptions(): array
     {
         return [
@@ -131,7 +134,7 @@ class ImpressionsChartWidget extends ChartWidget
         $filter = $this->filter ?? 'month';
         $period = $this->getPeriod();
         $dates = [];
-        
+
         if ($filter === 'year') {
             // Monthly labels for yearly view
             foreach ($period as $date) {
@@ -142,7 +145,7 @@ class ImpressionsChartWidget extends ChartWidget
             $currentDate = $period->first()->copy();
             while ($currentDate <= $period->last()) {
                 $endOfWeek = min($currentDate->copy()->addDays(6), $period->last());
-                $dates[] = $currentDate->format('M d') . ' - ' . $endOfWeek->format('M d');
+                $dates[] = $currentDate->format('M d').' - '.$endOfWeek->format('M d');
                 $currentDate->addDays(7);
             }
         } else {
@@ -151,14 +154,14 @@ class ImpressionsChartWidget extends ChartWidget
                 $dates[] = $date->format('D, M d');
             }
         }
-        
+
         return $dates;
     }
 
     protected function getDateKey($index): string
     {
         $filter = $this->filter ?? 'month';
-        
+
         if ($filter === 'year') {
             // Return month number for yearly view
             return Carbon::now()->startOfYear()->addMonths($index)->format('m');
@@ -174,7 +177,7 @@ class ImpressionsChartWidget extends ChartWidget
     protected function getDateFormat(): string
     {
         $filter = $this->filter ?? 'month';
-        
+
         return match ($filter) {
             'week' => '%Y-%m-%d',
             'month' => 'WEEK(%Y-%m-%d)',
@@ -185,7 +188,7 @@ class ImpressionsChartWidget extends ChartWidget
     protected function getPeriod(): CarbonPeriod
     {
         $filter = $this->filter ?? 'month';
-        
+
         return match ($filter) {
             'week' => CarbonPeriod::create(now()->subDays(6), now()),
             'month' => CarbonPeriod::create(now()->subDays(29), '7 days', now()),

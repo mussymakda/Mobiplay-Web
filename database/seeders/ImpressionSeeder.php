@@ -2,13 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\Impression;
 use App\Models\Ad;
-use App\Models\User;
+use App\Models\Impression;
 use App\Models\Package;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class ImpressionSeeder extends Seeder
 {
@@ -19,9 +18,10 @@ class ImpressionSeeder extends Seeder
     {
         $ads = Ad::all();
         $users = User::all();
-        
+
         if ($ads->isEmpty() || $users->isEmpty()) {
             $this->command->warn('No ads or users found. Please run AdSeeder and UserSeeder first.');
+
             return;
         }
 
@@ -60,7 +60,7 @@ class ImpressionSeeder extends Seeder
         $ips = [
             '192.168.1.100', '10.0.0.50', '172.16.0.25', '203.0.113.45',
             '198.51.100.78', '192.0.2.123', '203.0.113.89', '198.51.100.234',
-            '192.0.2.67', '203.0.113.156'
+            '192.0.2.67', '203.0.113.156',
         ];
 
         $this->command->info('Creating impressions for each ad...');

@@ -55,10 +55,15 @@
                                 </div>
                             </div>
                             <div class="form-group mb-5">
-                                <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <span class="normal-text">Sign In</span>
+                                    <span class="loading-text d-none">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Signing in...
+                                    </span>
+                                </button>
                             </div>
                             <div class="form-group">
-                                <p>Don’t have an account? <a href="{{ route('signup') }}">Sign up</a></p>
+                                <p>Don't have an account? <a href="{{ route('signup') }}">Sign up</a></p>
                             </div>
                         </form>
 
@@ -116,6 +121,68 @@
 
     <!-- Option 1: Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('form').on('submit', function(e) {
+                e.preventDefault();
+
+                const btn = $(this).find('button[type="submit"]');
+                const normalText = btn.find('.normal-text');
+                const loadingText = btn.find('.loading-text');
+
+                // Clear any existing error messages
+                $('.alert').remove();
+                $('.form-group .text-danger').remove();
+
+                // Show loading state
+                btn.prop('disabled', true);
+                normalText.addClass('d-none');
+                loadingText.removeClass('d-none');
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        }
+                    },
+                    error: function(xhr) {
+                        // Reset button state
+                        btn.prop('disabled', false);
+                        normalText.removeClass('d-none');
+                        loadingText.addClass('d-none');
+
+                        if (xhr.status === 422) {
+                            const response = xhr.responseJSON;
+                            if (response.errors) {
+                                // Display validation errors under each field
+                                $.each(response.errors, function(field, messages) {
+                                    const input = $('[name="' + field + '"]');
+                                    input.after('<div class="text-danger mt-1">' + messages[0] + '</div>');
+                                });
+                            }
+                            // Add a general error message at the top
+                            $('form').prepend(
+                                '<div class="alert alert-danger">' +
+                                    (response.message || 'Please check the form and try again.') +
+                                '</div>'
+                            );
+                        } else {
+                            // Add a general error message for other types of errors
+                            $('form').prepend(
+                                '<div class="alert alert-danger">' +
+                                    'An error occurred during login. Please try again.' +
+                                '</div>'
+                            );
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

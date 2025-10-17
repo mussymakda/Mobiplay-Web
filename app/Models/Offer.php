@@ -40,8 +40,11 @@ class Offer extends Model
 
     // Offer types
     const TYPE_FIRST_DEPOSIT = 'first_deposit';
+
     const TYPE_RELOAD_BONUS = 'reload_bonus';
+
     const TYPE_PERCENTAGE_BONUS = 'percentage_bonus';
+
     const TYPE_FIXED_BONUS = 'fixed_bonus';
 
     public function payments()
@@ -58,23 +61,24 @@ class Offer extends Model
     public function scopeValid($query)
     {
         $now = now();
+
         return $query->where('valid_from', '<=', $now)
-                    ->where('valid_until', '>=', $now);
+            ->where('valid_until', '>=', $now);
     }
 
     public function scopeAvailable($query)
     {
         return $query->active()->valid()
-                    ->where(function ($q) {
-                        $q->whereNull('usage_limit')
-                          ->orWhereColumn('used_count', '<', 'usage_limit');
-                    });
+            ->where(function ($q) {
+                $q->whereNull('usage_limit')
+                    ->orWhereColumn('used_count', '<', 'usage_limit');
+            });
     }
 
     // Calculate bonus amount for a given deposit
     public function calculateBonus($depositAmount)
     {
-        if (!$this->isEligible($depositAmount)) {
+        if (! $this->isEligible($depositAmount)) {
             return 0;
         }
 
@@ -99,10 +103,18 @@ class Offer extends Model
     // Check if offer is eligible for a deposit amount
     public function isEligible($depositAmount)
     {
-        if (!$this->is_active) return false;
-        if (now() < $this->valid_from || now() > $this->valid_until) return false;
-        if ($this->usage_limit && $this->used_count >= $this->usage_limit) return false;
-        if ($this->minimum_deposit && $depositAmount < $this->minimum_deposit) return false;
+        if (! $this->is_active) {
+            return false;
+        }
+        if (now() < $this->valid_from || now() > $this->valid_until) {
+            return false;
+        }
+        if ($this->usage_limit && $this->used_count >= $this->usage_limit) {
+            return false;
+        }
+        if ($this->minimum_deposit && $depositAmount < $this->minimum_deposit) {
+            return false;
+        }
 
         return true;
     }
@@ -112,10 +124,10 @@ class Offer extends Model
     {
         if ($this->type === self::TYPE_FIRST_DEPOSIT) {
             // Check if user has made any successful deposits before
-            return !Payment::where('user_id', $user->id)
-                          ->where('type', Payment::TYPE_DEPOSIT)
-                          ->where('status', Payment::STATUS_COMPLETED)
-                          ->exists();
+            return ! Payment::where('user_id', $user->id)
+                ->where('type', Payment::TYPE_DEPOSIT)
+                ->where('status', Payment::STATUS_COMPLETED)
+                ->exists();
         }
 
         return true;

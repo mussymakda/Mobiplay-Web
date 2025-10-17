@@ -11,16 +11,15 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    
+
     protected static ?string $navigationGroup = 'User Management';
-    
+
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
@@ -54,7 +53,7 @@ class UserResource extends Resource
                             ->dehydrated(fn ($state) => filled($state))
                             ->placeholder('Enter password'),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Additional Information')
                     ->schema([
                         Forms\Components\Toggle::make('email_verified')
@@ -155,8 +154,7 @@ class UserResource extends Resource
                     ->alignEnd()
                     ->sortable()
                     ->weight('bold')
-                    ->color(fn (User $record): string => 
-                        $record->total_balance <= 0 ? 'danger' : 
+                    ->color(fn (User $record): string => $record->total_balance <= 0 ? 'danger' :
                         ($record->total_balance < 50 ? 'warning' : 'success')
                     ),
                 Tables\Columns\IconColumn::make('auto_debit_enabled')
@@ -198,10 +196,10 @@ class UserResource extends Resource
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                 ])->label('Actions')
-                ->icon('heroicon-m-ellipsis-vertical')
-                ->size('sm')
-                ->color('gray')
-                ->button(),
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('cost', 8, 4)->default(0); // Cost per impression/scan
             $table->timestamp('viewed_at');
             $table->timestamps();
-            
+
             $table->index(['ad_id', 'type']);
             $table->index(['user_id', 'viewed_at']);
             $table->index(['ad_id', 'viewed_at']);

@@ -14,7 +14,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         echo "Creating user with email: mustansir.makda@gmail.com\n";
-        
+
         User::updateOrCreate(
             ['email' => 'mustansir.makda@gmail.com'],
             [
@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-        
+
         echo "User created successfully!\n";
     }
 }

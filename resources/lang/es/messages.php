@@ -98,6 +98,7 @@ proporcionan sin costo adicional.',
     // Analytics translations
     'analytics' => 'Analítica',
     'published' => 'Publicado',
+    'processing' => 'Procesando...',
     'engagement' => 'Interacción',
     'audience' => 'Audiencia',
     'select_campaign' => 'Seleccionar Campaña',

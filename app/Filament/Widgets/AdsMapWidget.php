@@ -8,8 +8,11 @@ use Filament\Widgets\Widget;
 class AdsMapWidget extends Widget
 {
     protected static ?string $heading = 'Active Campaigns Map';
+
     protected static ?int $sort = 4;
+
     protected int|string|array $columnSpan = 'full';
+
     protected static string $view = 'filament.widgets.ads-map-widget';
 
     public function getViewData(): array

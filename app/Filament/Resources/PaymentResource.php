@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PaymentResource\Pages;
-use App\Filament\Resources\PaymentResource\RelationManagers;
 use App\Models\Payment;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,22 +10,21 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PaymentResource extends Resource
 {
     protected static ?string $model = Payment::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-    
+
     protected static ?string $navigationGroup = 'Financial Management';
-    
+
     protected static ?int $navigationSort = 1;
-    
+
     protected static ?string $navigationLabel = 'All Transactions';
-    
+
     protected static ?string $modelLabel = 'Transaction';
-    
+
     protected static ?string $pluralModelLabel = 'Transactions';
 
     public static function form(Form $form): Form
@@ -65,7 +63,7 @@ class PaymentResource extends Resource
                             ])
                             ->default(Payment::STATUS_PENDING),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Transaction Details')
                     ->schema([
                         Forms\Components\TextInput::make('stripe_payment_id')
@@ -85,7 +83,7 @@ class PaymentResource extends Resource
                             ->preload()
                             ->placeholder('Select offer (if applicable)'),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Additional Information')
                     ->schema([
                         Forms\Components\TextInput::make('bonus_amount')
@@ -276,12 +274,12 @@ class PaymentResource extends Resource
                             $refundAmount = $data['refund_amount'];
                             $refundReason = $data['refund_reason'];
                             $processStripeRefund = $data['process_stripe_refund'] ?? false;
-                            
+
                             \Illuminate\Support\Facades\DB::beginTransaction();
-                            
+
                             try {
                                 $stripeRefundId = null;
-                                
+
                                 // Process Stripe refund if requested and payment has Stripe ID
                                 if ($processStripeRefund && $record->stripe_payment_id) {
                                     try {
@@ -291,7 +289,7 @@ class PaymentResource extends Resource
                                             throw new \Exception('Stripe API key not configured');
                                         }
                                         \Stripe\Stripe::setApiKey($stripeSecret);
-                                        
+
                                         // Create Stripe refund
                                         $stripeRefund = \Stripe\Refund::create([
                                             'payment_intent' => $record->stripe_payment_id,
@@ -301,41 +299,42 @@ class PaymentResource extends Resource
                                                 'refund_reason' => $refundReason,
                                                 'admin_initiated' => 'true',
                                                 'original_payment_id' => $record->id,
-                                            ]
+                                            ],
                                         ]);
-                                        
+
                                         $stripeRefundId = $stripeRefund->id;
-                                        
+
                                         \Illuminate\Support\Facades\Log::info('Stripe refund processed', [
                                             'stripe_refund_id' => $stripeRefundId,
                                             'amount' => $refundAmount,
-                                            'original_payment_id' => $record->id
+                                            'original_payment_id' => $record->id,
                                         ]);
-                                        
+
                                     } catch (\Exception $e) {
                                         \Illuminate\Support\Facades\Log::error('Stripe refund failed', [
                                             'error' => $e->getMessage(),
                                             'payment_id' => $record->id,
-                                            'amount' => $refundAmount
+                                            'amount' => $refundAmount,
                                         ]);
-                                        
+
                                         \Filament\Notifications\Notification::make()
                                             ->title('Stripe refund failed')
-                                            ->body("Failed to process Stripe refund: " . $e->getMessage())
+                                            ->body('Failed to process Stripe refund: '.$e->getMessage())
                                             ->danger()
                                             ->send();
-                                        
+
                                         \Illuminate\Support\Facades\DB::rollBack();
+
                                         return;
                                     }
                                 }
-                                
+
                                 // Create refund payment record
                                 $refund = $user->payments()->create([
                                     'amount' => $refundAmount,
                                     'type' => Payment::TYPE_REFUND,
                                     'status' => Payment::STATUS_COMPLETED,
-                                    'transaction_id' => $stripeRefundId ?: ('refund_' . uniqid()),
+                                    'transaction_id' => $stripeRefundId ?: ('refund_'.uniqid()),
                                     'description' => "Refund: {$refundReason}",
                                     'stripe_payment_id' => $stripeRefundId,
                                     'metadata' => [
@@ -346,35 +345,35 @@ class PaymentResource extends Resource
                                         'stripe_refund_id' => $stripeRefundId,
                                     ],
                                 ]);
-                                
+
                                 // Add refund amount to user balance
                                 $user->increment('balance', $refundAmount);
-                                
+
                                 \Illuminate\Support\Facades\DB::commit();
-                                
+
                                 $message = "Refunded \${$refundAmount} to {$user->name}";
                                 if ($stripeRefundId) {
                                     $message .= " (Stripe Refund ID: {$stripeRefundId})";
                                 }
-                                
+
                                 \Filament\Notifications\Notification::make()
                                     ->title('Refund processed successfully')
                                     ->body($message)
                                     ->success()
                                     ->send();
-                                    
+
                             } catch (\Exception $e) {
                                 \Illuminate\Support\Facades\DB::rollBack();
-                                
+
                                 \Illuminate\Support\Facades\Log::error('Refund processing failed', [
                                     'error' => $e->getMessage(),
                                     'payment_id' => $record->id,
-                                    'amount' => $refundAmount
+                                    'amount' => $refundAmount,
                                 ]);
-                                
+
                                 \Filament\Notifications\Notification::make()
                                     ->title('Refund processing failed')
-                                    ->body("Failed to process refund: " . $e->getMessage())
+                                    ->body('Failed to process refund: '.$e->getMessage())
                                     ->danger()
                                     ->send();
                             }
@@ -382,16 +381,15 @@ class PaymentResource extends Resource
                         ->requiresConfirmation()
                         ->modalHeading('Process Refund')
                         ->modalDescription('This will create a refund payment and optionally process the refund through Stripe.')
-                        ->visible(fn (Payment $record): bool => 
-                            in_array($record->status, [Payment::STATUS_COMPLETED]) && 
+                        ->visible(fn (Payment $record): bool => in_array($record->status, [Payment::STATUS_COMPLETED]) &&
                             in_array($record->type, [Payment::TYPE_DEPOSIT, Payment::TYPE_AUTO_DEBIT])
                         ),
                     Tables\Actions\DeleteAction::make(),
                 ])
-                ->icon('heroicon-m-ellipsis-vertical')
-                ->size('sm')
-                ->color('gray')
-                ->button()
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

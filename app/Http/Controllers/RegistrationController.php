@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OtpMail;
+use App\Models\User;
 use Illuminate\Http\Request;
-use App\Models\User; // Ensure User model is imported
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 
 class RegistrationController extends Controller
 {
@@ -42,11 +47,42 @@ class RegistrationController extends Controller
             'organization_address' => 'required|string|max:255',
         ]);
 
-        // Store data in session
-        $request->session()->put('organization_info', $validated);
+        // Get signup data from session
+        $signupData = Session::get('signup_data');
+        
+        if (!$signupData) {
+            return redirect()->route('login')->withErrors(['error' => 'Session expired. Please start over.']);
+        }
 
-        // Redirect to next step
-        return redirect()->route('signup.phone.form');
+        // Add organization info to session
+        $signupData['organization_name'] = $validated['organization_name'];
+        $signupData['organization_email'] = $validated['organization_email'];
+        $signupData['organization_phone'] = $validated['organization_phone'];
+        $signupData['organization_address'] = $validated['organization_address'];
+        $signupData['step'] = 'otp';
+
+        // Generate OTP
+        $otp = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+
+        try {
+            // Send OTP email
+            Mail::to($signupData['email'])->send(
+                new OtpMail($otp, $signupData['first_name'], $signupData['last_name'])
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to send OTP email: '.$e->getMessage());
+            return redirect()->back()->withErrors(['email' => 'Failed to send verification code. Please try again.']);
+        }
+
+        // Add OTP data to session
+        $signupData['otp'] = $otp;
+        $signupData['attempts'] = 0;
+        $signupData['expires_at'] = now()->addMinutes(10);
+        
+        Session::put('signup_data', $signupData);
+
+        // Redirect to signup page (OTP step)
+        return redirect()->route('signup')->with('message', 'Verification code sent to your email.');
     }
 
     public function showPhoneVerificationForm()
@@ -101,17 +137,17 @@ class RegistrationController extends Controller
         $signupData = $request->session()->get('signup');
         $organizationInfo = $request->session()->get('organization_info');
         $locationInfo = $request->session()->get('location_info');
-    
+
         // Validate final form data
         $validated = $request->validate([
             'account_type' => 'required|string',
         ]);
-    
+
         // Check if all necessary data is available
-        if (!$signupData || !$organizationInfo || !$locationInfo) {
+        if (! $signupData || ! $organizationInfo || ! $locationInfo) {
             return redirect()->back()->withErrors(['error' => 'Incomplete signup data.']);
         }
-    
+
         try {
             // Create the user
             $user = User::create([
@@ -129,11 +165,10 @@ class RegistrationController extends Controller
             ]);
             // Clear session data
             $request->session()->flush();
-    
+
             return redirect()->route('login');
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'An error occurred while creating your account. Please try again.']);
         }
     }
-    
 }

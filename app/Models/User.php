@@ -98,29 +98,29 @@ class User extends Authenticatable
             Payment::TYPE_AD_SPEND,
             Payment::TYPE_REFUND,
         ];
-        
-        if (!in_array($type, $validTypes)) {
+
+        if (! in_array($type, $validTypes)) {
             // If invalid type, use it as description and default to refund type
             $description = $description ?? $type;
             $type = Payment::TYPE_REFUND;
         }
-        
+
         $this->increment('balance', $amount);
-        
+
         // Create payment record
         return $this->payments()->create([
             'amount' => $amount,
             'type' => $type,
             'status' => Payment::STATUS_COMPLETED,
             'description' => $description ?? "Balance added: $amount",
-            'transaction_id' => 'manual_' . uniqid(),
+            'transaction_id' => 'manual_'.uniqid(),
         ]);
     }
 
     public function addBonusBalance($amount, $offerId = null, $description = null)
     {
         $this->increment('bonus_balance', $amount);
-        
+
         // Create payment record
         return $this->payments()->create([
             'amount' => 0,
@@ -158,17 +158,17 @@ class User extends Authenticatable
 
     public function getFormattedBalanceAttribute()
     {
-        return '$' . number_format($this->balance, 2);
+        return '$'.number_format($this->balance, 2);
     }
 
     public function getFormattedBonusBalanceAttribute()
     {
-        return '$' . number_format($this->bonus_balance, 2);
+        return '$'.number_format($this->bonus_balance, 2);
     }
 
     public function getFormattedTotalBalanceAttribute()
     {
-        return '$' . number_format($this->total_balance, 2);
+        return '$'.number_format($this->total_balance, 2);
     }
 
     public function getTotalImpressionsAttribute()
@@ -184,9 +184,9 @@ class User extends Authenticatable
     public function getProfileImageUrlAttribute()
     {
         if ($this->profile_image) {
-            return asset('storage/' . $this->profile_image);
+            return asset('storage/'.$this->profile_image);
         }
+
         return asset('assets/images/demo-profile.svg');
     }
-
 }

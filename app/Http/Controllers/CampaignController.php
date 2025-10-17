@@ -19,11 +19,12 @@ class CampaignController extends Controller
         try {
             // Fetch all active packages from the database
             $packages = Package::active()->orderBy('priority_level')->get();
-            
+
             return view('campaign-wizard', compact('packages'));
         } catch (\Exception $e) {
             // If there's an error fetching packages, return view with empty collection
             $packages = collect();
+
             return view('campaign-wizard', compact('packages'));
         }
     }
@@ -34,15 +35,15 @@ class CampaignController extends Controller
     public function showCampaignList()
     {
         $user = Auth::user();
-        
+
         // Get user's campaigns/ads
         $campaigns = Ad::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->get();
-            
+
         return view('camplain-list', compact('campaigns'));
     }
-    
+
     /**
      * Display a listing of the campaigns.
      * This is an alias for showCampaignList to maintain route compatibility.
@@ -59,7 +60,7 @@ class CampaignController extends Controller
     {
         // Check if packages are available in the database
         $hasPackages = Package::active()->count() > 0;
-        
+
         $rules = [
             'campaign_name' => 'required|string|max:255',
             'ctaUrl' => 'nullable|url',
@@ -68,12 +69,12 @@ class CampaignController extends Controller
             'selected_longitude' => 'nullable|numeric',
             'selected_radius' => 'nullable|numeric|min:1|max:50',
         ];
-        
+
         // Only require package selection if packages exist in database
         if ($hasPackages) {
             $rules['selected_package_id'] = 'required|exists:packages,id';
         }
-        
+
         $request->validate($rules);
 
         // Handle file upload
@@ -84,8 +85,8 @@ class CampaignController extends Controller
 
         // Here you would typically save the campaign to the database
         // For now, we'll just redirect with a success message
-        
-        return redirect()->route('camplain-list')->with('success', 'Campaign created successfully! Media saved to: ' . $mediaPath);
+
+        return redirect()->route('camplain-list')->with('success', 'Campaign created successfully! Media saved to: '.$mediaPath);
     }
 
     /**
@@ -94,17 +95,17 @@ class CampaignController extends Controller
     public function create(Request $request)
     {
         $user = Auth::user();
-        
+
         // Debug: Log the request data
         Log::info('Campaign creation attempt:', [
             'user_id' => $user->id,
             'request_data' => $request->all(),
-            'has_file' => $request->hasFile('media_file')
+            'has_file' => $request->hasFile('media_file'),
         ]);
-        
+
         // Check if packages are available in the database
         $hasPackages = Package::active()->count() > 0;
-        
+
         $rules = [
             'campaign_name' => 'required|string|max:255',
             'ctaUrl' => 'nullable|url',
@@ -116,12 +117,12 @@ class CampaignController extends Controller
             'scheduled_date' => 'nullable|date',
             'save_as_draft' => 'nullable|boolean',
         ];
-        
+
         // Only require package selection if packages exist in database
         if ($hasPackages) {
             $rules['selected_package_id'] = 'required|exists:packages,id';
         }
-        
+
         $request->validate($rules);
 
         try {
@@ -133,7 +134,7 @@ class CampaignController extends Controller
             if ($request->hasFile('media_file')) {
                 $file = $request->file('media_file');
                 $mediaPath = $file->store('campaign_media', 'public');
-                
+
                 // Determine media type
                 $mimeType = $file->getMimeType();
                 $mediaType = str_starts_with($mimeType, 'video/') ? Ad::MEDIA_TYPE_VIDEO : Ad::MEDIA_TYPE_IMAGE;
@@ -143,7 +144,7 @@ class CampaignController extends Controller
             $package = null;
             $dailyBudget = $request->daily_budget ?? 1.00;
             $budget = $dailyBudget; // Use daily budget as the initial budget
-            
+
             if ($hasPackages && $request->selected_package_id) {
                 $package = Package::findOrFail($request->selected_package_id);
                 // Budget is now based on user input, not package price
@@ -173,45 +174,45 @@ class CampaignController extends Controller
             ]);
 
             // If not a draft, check balance and handle payment
-            if (!$isDraft && $budget > 0) {
+            if (! $isDraft && $budget > 0) {
                 // Check if user has sufficient balance
                 if ($user->total_balance < $budget) {
                     DB::commit();
-                    
+
                     // Redirect to payment with ad info
                     return redirect()->route('payment.make', [
                         'ad_id' => $ad->id,
                         'amount' => $budget,
-                        'description' => "Payment for campaign: {$ad->campaign_name}"
+                        'description' => "Payment for campaign: {$ad->campaign_name}",
                     ])->with('info', 'Insufficient balance. Please add funds to activate your campaign.');
                 }
-                
+
                 // Deduct from user balance
                 $user->deductBalance($budget, 'ad_spend', "Campaign budget for: {$ad->campaign_name}");
-                
+
                 // Update ad as active since payment is handled
                 $ad->update(['status' => Ad::STATUS_ACTIVE]);
             }
 
             DB::commit();
 
-            $message = $isDraft 
-                ? 'Campaign saved as draft successfully!' 
+            $message = $isDraft
+                ? 'Campaign saved as draft successfully!'
                 : ($budget > 0 ? 'Campaign created and activated successfully!' : 'Campaign created successfully!');
-                
+
             return redirect()->route('camplain-list')->with('success', $message);
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             Log::error('Campaign creation failed:', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return back()->withErrors([
-                'error' => 'Failed to create campaign: ' . $e->getMessage()
+                'error' => 'Failed to create campaign: '.$e->getMessage(),
             ])->withInput();
         }
     }
@@ -230,33 +231,33 @@ class CampaignController extends Controller
 
         try {
             // Get parameters
-            $latitude = (float)$request->latitude;
-            $longitude = (float)$request->longitude;
-            $radius = (float)$request->radius;
-            
+            $latitude = (float) $request->latitude;
+            $longitude = (float) $request->longitude;
+            $radius = (float) $request->radius;
+
             // Fallback to query parameters if request parameters are not found in JSON body
-            if (!$latitude && $request->has('latitude')) {
-                $latitude = (float)$request->query('latitude');
+            if (! $latitude && $request->has('latitude')) {
+                $latitude = (float) $request->query('latitude');
             }
-            if (!$longitude && $request->has('longitude')) {
-                $longitude = (float)$request->query('longitude');
+            if (! $longitude && $request->has('longitude')) {
+                $longitude = (float) $request->query('longitude');
             }
-            if (!$radius && $request->has('radius')) {
-                $radius = (float)$request->query('radius');
+            if (! $radius && $request->has('radius')) {
+                $radius = (float) $request->query('radius');
             }
-            
+
             Log::info('Fetching nearby drivers', [
                 'latitude' => $latitude,
                 'longitude' => $longitude,
-                'radius' => $radius
+                'radius' => $radius,
             ]);
-            
+
             Log::info('Querying drivers with Haversine formula', [
                 'latitude' => $latitude,
                 'longitude' => $longitude,
-                'radius' => $radius
+                'radius' => $radius,
             ]);
-            
+
             // Use Haversine formula to find drivers within radius
             // 3959 is Earth's radius in miles
             $drivers = \App\Models\Driver::selectRaw("
@@ -288,17 +289,17 @@ class CampaignController extends Controller
                         'id' => $driver->id,
                         'name' => $driver->name,
                         'vehicle' => $driver->vehicle,
-                        'latitude' => (float)$driver->latitude,
-                        'longitude' => (float)$driver->longitude,
+                        'latitude' => (float) $driver->latitude,
+                        'longitude' => (float) $driver->longitude,
                         'status' => $driver->status,
-                        'is_active' => (bool)$driver->is_active,
+                        'is_active' => (bool) $driver->is_active,
                         'status_color' => $driver->status_color,
                         'distance' => round($driver->distance, 1),
-                        'last_update' => $driver->last_location_update ? 
-                                        $driver->last_location_update->diffForHumans() : 'Unknown'
+                        'last_update' => $driver->last_location_update ?
+                                        $driver->last_location_update->diffForHumans() : 'Unknown',
                     ];
                 });
-                
+
             // Get total active drivers count for reference
             $totalCount = \App\Models\Driver::where('last_location_update', '>=', now()->subHours(24))
                 ->whereNotNull('current_latitude')
@@ -308,17 +309,17 @@ class CampaignController extends Controller
             return response()->json([
                 'success' => true,
                 'drivers' => $drivers,
-                'total_count' => $totalCount
+                'total_count' => $totalCount,
             ]);
         } catch (\Exception $e) {
-            Log::error('Error fetching nearby drivers: ' . $e->getMessage(), [
+            Log::error('Error fetching nearby drivers: '.$e->getMessage(), [
                 'exception' => $e,
-                'request' => $request->all()
+                'request' => $request->all(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching nearby drivers: ' . $e->getMessage()
+                'message' => 'Error fetching nearby drivers: '.$e->getMessage(),
             ], 500);
         }
     }

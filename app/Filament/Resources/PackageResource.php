@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PackageResource\Pages;
-use App\Filament\Resources\PackageResource\RelationManagers;
 use App\Models\Package;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,18 +10,17 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PackageResource extends Resource
 {
     protected static ?string $model = Package::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-cube';
-    
+
     protected static ?string $navigationGroup = 'Ad Management';
-    
+
     protected static ?int $navigationSort = 1;
-    
+
     protected static ?string $navigationLabel = 'Packages';
 
     public static function form(Form $form): Form
@@ -63,7 +61,7 @@ class PackageResource extends Resource
                             ->helperText('Brief description of what this package offers')
                             ->rows(3),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Pricing & Status')
                     ->schema([
                         Forms\Components\TextInput::make('cost_per_impression')
@@ -189,19 +187,18 @@ class PackageResource extends Resource
                         ->icon(fn (Package $record): string => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
                         ->color(fn (Package $record): string => $record->is_active ? 'danger' : 'success')
                         ->action(function (Package $record): void {
-                            $record->update(['is_active' => !$record->is_active]);
+                            $record->update(['is_active' => ! $record->is_active]);
                         })
                         ->requiresConfirmation()
-                        ->modalDescription(fn (Package $record): string => 
-                            $record->is_active 
+                        ->modalDescription(fn (Package $record): string => $record->is_active
                                 ? 'This will deactivate the package and prevent users from selecting it.'
                                 : 'This will activate the package and make it available for users to select.'
                         ),
                 ])->label('Actions')
-                ->icon('heroicon-m-ellipsis-vertical')
-                ->size('sm')
-                ->color('gray')
-                ->button(),
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

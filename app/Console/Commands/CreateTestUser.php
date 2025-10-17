@@ -32,11 +32,12 @@ class CreateTestUser extends Command
             [
                 'name' => 'Mustansir Makda',
                 'password' => Hash::make('password'),
-                'email_verified_at' => now()
+                'email_verified_at' => now(),
             ]
         );
 
         $this->info("User created: {$user->name} ({$user->email})");
+
         return Command::SUCCESS;
     }
 }

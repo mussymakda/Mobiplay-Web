@@ -3,7 +3,6 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Payment;
-use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
@@ -11,15 +10,18 @@ use Illuminate\Support\Facades\DB;
 class RevenueExpenseChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Revenue & Budget';
+
     protected static ?int $sort = 1;
+
     protected int|string|array $columnSpan = 2;
+
     protected static ?string $maxHeight = '300px';
-    
+
     protected function getType(): string
     {
         return 'area';
     }
-    
+
     protected function getOptions(): array
     {
         return [
@@ -148,18 +150,18 @@ class RevenueExpenseChartWidget extends ChartWidget
     {
         $period = $this->getPeriod();
         $dates = [];
-        
+
         foreach ($period as $date) {
             $dates[] = $date->format('M d');
         }
-        
+
         return $dates;
     }
 
     protected function getPeriod(): CarbonPeriod
     {
         $filter = $this->filter ?? 'month';
-        
+
         return match ($filter) {
             'week' => CarbonPeriod::create(now()->subDays(6), now()),
             'month' => CarbonPeriod::create(now()->subDays(29), now()),

@@ -4,41 +4,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your OTP Code</title>
+    <title>Mobiplay - Verification Code</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #000; /* Black background */
+            font-family: 'Satoshi', 'Arial', sans-serif;
+            background-color: #ffffff;
             margin: 0;
             padding: 0;
-            color: #fff; /* White text */
+            color: #1a1a1a;
         }
 
         .container {
-            background: #1a1a1a; /* Dark gray background for the email container */
+            background: #ffffff;
             padding: 40px;
             border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
             max-width: 600px;
             margin: 30px auto;
-            border: 1px solid #444; /* Slightly lighter border */
+            border: 1px solid #e0e0e0;
         }
 
         .header {
             text-align: center;
             padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
         }
 
         .header img {
-            width: 150px; /* Logo size */
+            width: 200px;
             margin-bottom: 20px;
         }
 
         .header h1 {
             font-size: 28px;
-            color: #4CAF50; /* Green text */
+            color: #1a1a1a;
             margin-bottom: 10px;
-            letter-spacing: 1px;
+            letter-spacing: 0;
+            font-weight: 600;
         }
 
         .otp-code {

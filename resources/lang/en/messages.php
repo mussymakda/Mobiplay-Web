@@ -28,6 +28,7 @@ return [
     'how_it_works_title' => 'How it Works - Mobiplay Advertiser Portal',
     'maintain_min_deposit' => '*Maintain a minimum monthly deposit of $3,000; Minimum daily ad spend: $100. Pause your campaign at any time',
     'step_1' => 'Step 1',
+    'processing' => 'Processing...',
     'upload_content' => 'Upload your content and generate a unique QR code to track your campaign',
     'step_2' => 'Step 2',
     'create_map' => 'Create a custom map to target your audience based on their location',
@@ -98,6 +99,7 @@ return [
 
     // Analytics translations
     'analytics' => 'Analytics',
+    'processing' => 'Processing...',
     'published' => 'Published',
     'engagement' => 'Engagement',
     'audience' => 'Audience',

@@ -8,8 +8,6 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PaymentsRelationManager extends RelationManager
 {
@@ -77,8 +75,7 @@ class PaymentsRelationManager extends RelationManager
                     ->money('USD')
                     ->alignEnd()
                     ->sortable()
-                    ->color(fn (Payment $record): string => 
-                        $record->amount < 0 ? 'danger' : 'success'
+                    ->color(fn (Payment $record): string => $record->amount < 0 ? 'danger' : 'success'
                     ),
                 Tables\Columns\TextColumn::make('bonus_amount')
                     ->label('Bonus')
@@ -104,6 +101,7 @@ class PaymentsRelationManager extends RelationManager
                     ->limit(30)
                     ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
                         $state = $column->getState();
+
                         return strlen($state) > 30 ? $state : null;
                     }),
                 Tables\Columns\TextColumn::make('offer.name')

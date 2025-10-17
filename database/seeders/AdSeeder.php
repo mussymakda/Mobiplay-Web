@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Ad;
-use App\Models\User;
 use App\Models\Package;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class AdSeeder extends Seeder
 {
@@ -16,9 +16,10 @@ class AdSeeder extends Seeder
     {
         $users = User::all();
         $packages = Package::all();
-        
+
         if ($users->isEmpty() || $packages->isEmpty()) {
             $this->command->warn('No users or packages found. Please run UserSeeder and PackageSeeder first.');
+
             return;
         }
 
@@ -137,6 +138,6 @@ class AdSeeder extends Seeder
             Ad::create($adData);
         }
 
-        $this->command->info('Created ' . count($ads) . ' sample ads');
+        $this->command->info('Created '.count($ads).' sample ads');
     }
 }

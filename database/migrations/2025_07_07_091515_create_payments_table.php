@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -16,7 +16,7 @@ return new class extends Migration
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
         Schema::dropIfExists('payments');
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        
+
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -31,7 +31,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->json('metadata')->nullable()->comment('Additional payment data');
             $table->timestamps();
-            
+
             $table->index(['user_id', 'status']);
             $table->index(['type', 'status']);
             $table->index('stripe_payment_id');

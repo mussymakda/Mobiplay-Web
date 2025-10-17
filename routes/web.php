@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AnalyticsController;
-use App\Http\Controllers\DriverController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DriverRegistrationController;
@@ -52,8 +51,15 @@ Route::get('command:migrate_refresh', function () {
 });
 
 Route::get('/', function () {
-    return view('landing.index'); // Show landing page instead of redirecting to login
+    // If user is authenticated, redirect to dashboard
+    if (Auth::check()) {
+        return redirect('/dashboard');
+    }
+    return view('landing.index');
 })->name('landing');
+
+// Handle initial signup from landing page
+Route::post('/signup/initial', [AuthController::class, 'handleInitialSignup'])->name('signup.initial');
 
 Route::get('/stripe/balance', [PaymentController::class, 'getBalance'])->name('stripe.balance');
 

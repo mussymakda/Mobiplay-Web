@@ -31,12 +31,12 @@ class EditUser extends EditRecord
         if (isset($data['email_verified'])) {
             if ($data['email_verified'] && $this->record->email_verified_at === null) {
                 $data['email_verified_at'] = now();
-            } elseif (!$data['email_verified'] && $this->record->email_verified_at !== null) {
+            } elseif (! $data['email_verified'] && $this->record->email_verified_at !== null) {
                 $data['email_verified_at'] = null;
             }
             unset($data['email_verified']);
         }
-        
+
         return $data;
     }
 }

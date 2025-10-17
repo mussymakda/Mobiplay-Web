@@ -60,38 +60,46 @@
         <div class="col-lg-6">
           <div class="mobiplay-form">
             <h3>@lang('messages.create_advertiser_account')</h3>
-            <div class="row">
-              <div class="col-6">
-                <div class="form-group mb-3">
-                  <input type="text" class="form-control" placeholder="@lang('messages.first_name')">
+            <form action="{{ route('signup.initial') }}" method="POST" id="landingSignupForm">
+              @csrf
+              <div class="row">
+                <div class="col-6">
+                  <div class="form-group mb-3">
+                    <input type="text" name="first_name" class="form-control" value="{{ old('first_name') }}" placeholder="@lang('messages.first_name')" required>
+                    <div class="error-message text-danger small d-none"></div>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="form-group mb-3">
+                    <input type="text" name="last_name" class="form-control" value="{{ old('last_name') }}" placeholder="@lang('messages.last_name')" required>
+                    <div class="error-message text-danger small d-none"></div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-group mb-3">
+                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" placeholder="@lang('messages.email')" required>
+                    <div class="error-message text-danger small d-none"></div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-group mb-3">
+                    <input type="password" name="password" class="form-control" placeholder="@lang('messages.create_password')" required minlength="8">
+                    <div class="error-message text-danger small d-none"></div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-group mb-3">
+                    <input type="password" name="password_confirmation" class="form-control" placeholder="@lang('messages.confirm_password')" required minlength="8">
+                    <div class="error-message text-danger small d-none"></div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-group mb-3 mt-4">
+                    <button type="submit" class="btn btn-primary w-100">@lang('messages.sign_up')</button>
+                  </div>
                 </div>
               </div>
-              <div class="col-6">
-                <div class="form-group mb-3">
-                  <input type="text" class="form-control" placeholder="@lang('messages.last_name')">
-                </div>
-              </div>
-              <div class="col-12">
-                <div class="form-group mb-3">
-                  <input type="email" class="form-control" placeholder="@lang('messages.email')">
-                </div>
-              </div>
-              <div class="col-12">
-                <div class="form-group mb-3">
-                  <input type="password" class="form-control" placeholder="@lang('messages.create_password')">
-                </div>
-              </div>
-              <div class="col-12">
-                <div class="form-group mb-3">
-                  <input type="password" class="form-control" placeholder="@lang('messages.confirm_password')">
-                </div>
-              </div>
-              <div class="col-12">
-                <div class="form-group mb-3 mt-4">
-                  <a href="#" class="btn btn-primary w-100">@lang('messages.sign_up')</a>
-                </div>
-              </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>
@@ -243,38 +251,46 @@
         <div class="col-lg-5">
         <div class="mobiplay-form">
             <h3>@lang('messages.create_advertiser_account')</h3>
-            <div class="row">
-              <div class="col-6">
-                <div class="form-group mb-3">
-                  <input type="text" class="form-control" placeholder="@lang('messages.first_name')">
+            <form action="{{ route('signup.initial') }}" method="POST" id="landingSignupFormBottom">
+              @csrf
+              <div class="row">
+                <div class="col-6">
+                  <div class="form-group mb-3">
+                    <input type="text" name="first_name" class="form-control" value="{{ old('first_name') }}" placeholder="@lang('messages.first_name')" required>
+                    <div class="error-message text-danger small d-none"></div>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="form-group mb-3">
+                    <input type="text" name="last_name" class="form-control" value="{{ old('last_name') }}" placeholder="@lang('messages.last_name')" required>
+                    <div class="error-message text-danger small d-none"></div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-group mb-3">
+                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" placeholder="@lang('messages.email')" required>
+                    <div class="error-message text-danger small d-none"></div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-group mb-3">
+                    <input type="password" name="password" class="form-control" placeholder="@lang('messages.create_password')" required minlength="8">
+                    <div class="error-message text-danger small d-none"></div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-group mb-3">
+                    <input type="password" name="password_confirmation" class="form-control" placeholder="@lang('messages.confirm_password')" required minlength="8">
+                    <div class="error-message text-danger small d-none"></div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-group mb-3 mt-4">
+                    <button type="submit" class="btn btn-primary w-100">@lang('messages.sign_up')</button>
+                  </div>
                 </div>
               </div>
-              <div class="col-6">
-                <div class="form-group mb-3">
-                  <input type="text" class="form-control" placeholder="@lang('messages.last_name')">
-                </div>
-              </div>
-              <div class="col-12">
-                <div class="form-group mb-3">
-                  <input type="email" class="form-control" placeholder="@lang('messages.email')">
-                </div>
-              </div>
-              <div class="col-12">
-                <div class="form-group mb-3">
-                  <input type="password" class="form-control" placeholder="@lang('messages.create_password')">
-                </div>
-              </div>
-              <div class="col-12">
-                <div class="form-group mb-3">
-                  <input type="password" class="form-control" placeholder="@lang('messages.confirm_password')">
-                </div>
-              </div>
-              <div class="col-12">
-                <div class="form-group mb-3 mt-4">
-                  <a href="#" class="btn btn-primary w-100">@lang('messages.sign_up')</a>
-                </div>
-              </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>
@@ -331,6 +347,88 @@
   <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
   <script type="text/javascript">
+    // Set up CSRF token for all AJAX requests
+    $.ajaxSetup({
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      }
+    });
+
+    $('.lang-menu a').click(function(){
+      $('.lang-menu a.active').removeClass('active');
+      $(this).addClass('active');
+    });
+
+    // Handle form submission with AJAX
+    $('#landingSignupForm, #landingSignupFormBottom').on('submit', function(e) {
+      e.preventDefault();
+      
+      const form = $(this);
+      const submitBtn = form.find('button[type="submit"]');
+      const originalText = submitBtn.text();
+      
+      // Show loading state
+      submitBtn.prop('disabled', true).text('Creating account...');
+      
+      // Clear previous error messages
+      form.find('.error-message').addClass('d-none').text('');
+      form.find('.alert-danger').remove();
+
+      // Get form data
+      const formData = new FormData(form[0]);
+      
+      // Send AJAX request
+      $.ajax({
+        url: form.attr('action'),
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          if (response.redirect) {
+            window.location.href = response.redirect;
+          }
+        },
+        error: function(xhr) {
+          // Reset button state
+          submitBtn.prop('disabled', false).text(originalText);
+
+          if (xhr.status === 422) {
+            const response = xhr.responseJSON;
+            console.log('Validation errors:', response.errors);
+            if (response.errors) {
+              // Display validation errors under each field
+              $.each(response.errors, function(field, messages) {
+                const input = form.find('[name="' + field + '"]');
+                const errorDiv = input.siblings('.error-message');
+                if (errorDiv.length) {
+                  errorDiv.removeClass('d-none').text(messages[0]);
+                }
+              });
+
+              // Also show all errors in an alert
+              let errorList = '<ul class="mb-0">';
+              $.each(response.errors, function(field, messages) {
+                errorList += '<li>' + messages[0] + '</li>';
+              });
+              errorList += '</ul>';
+              
+              form.prepend(
+                '<div class="alert alert-danger">' + errorList + '</div>'
+              );
+            }
+          } else {
+            // Display generic error
+            form.prepend(
+              '<div class="alert alert-danger">' +
+              'An error occurred. Please try again.' +
+              '</div>'
+            );
+          }
+        }
+      });
+    });
+  </script>
     $('.lang-menu a').click(function(){
       $('.lang-menu a.active').removeClass('active');
       $(this).addClass('active');

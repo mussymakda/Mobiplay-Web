@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ImpressionResource\Pages;
-use App\Filament\Resources\ImpressionResource\RelationManagers;
 use App\Models\Impression;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,22 +10,21 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ImpressionResource extends Resource
 {
     protected static ?string $model = Impression::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-eye';
-    
+
     protected static ?string $navigationGroup = 'Campaign Management';
-    
+
     protected static ?int $navigationSort = 2;
-    
+
     protected static ?string $navigationLabel = 'Impressions & Analytics';
-    
+
     protected static ?string $modelLabel = 'Impression';
-    
+
     protected static ?string $pluralModelLabel = 'Impressions';
 
     public static function form(Form $form): Form
@@ -63,7 +61,7 @@ class ImpressionResource extends Resource
                             ->required()
                             ->default(now()),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Location & Device Info')
                     ->schema([
                         Forms\Components\Textarea::make('location_data')
@@ -115,7 +113,8 @@ class ImpressionResource extends Resource
                     ->label('Total Ad Cost')
                     ->getStateUsing(function (Impression $record): string {
                         $totalCost = $record->ad->impressions()->sum('cost');
-                        return '$' . number_format($totalCost, 4);
+
+                        return '$'.number_format($totalCost, 4);
                     })
                     ->alignEnd()
                     ->color('info'),
@@ -129,6 +128,7 @@ class ImpressionResource extends Resource
                         if (is_array($state) && isset($state['city'])) {
                             return $state['city'];
                         }
+
                         return '—';
                     })
                     ->toggleable(),
@@ -138,6 +138,7 @@ class ImpressionResource extends Resource
                         if (is_array($state) && isset($state['device'])) {
                             return ucfirst($state['device']);
                         }
+
                         return '—';
                     })
                     ->toggleable(),
@@ -197,8 +198,7 @@ class ImpressionResource extends Resource
                     }),
                 Tables\Filters\Filter::make('qr_scans_only')
                     ->label('QR Scans Only')
-                    ->query(fn (Builder $query): Builder => 
-                        $query->where('type', Impression::TYPE_QR_SCAN)
+                    ->query(fn (Builder $query): Builder => $query->where('type', Impression::TYPE_QR_SCAN)
                     ),
             ])
             ->actions([

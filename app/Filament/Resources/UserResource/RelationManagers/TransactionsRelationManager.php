@@ -9,7 +9,6 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class TransactionsRelationManager extends RelationManager
 {
@@ -72,8 +71,7 @@ class TransactionsRelationManager extends RelationManager
                     ->money('USD')
                     ->alignEnd()
                     ->sortable()
-                    ->color(fn (Transaction $record): string => 
-                        $record->amount < 0 ? 'danger' : 'success'
+                    ->color(fn (Transaction $record): string => $record->amount < 0 ? 'danger' : 'success'
                     ),
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([

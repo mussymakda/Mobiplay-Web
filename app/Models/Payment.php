@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,16 +31,24 @@ class Payment extends Model
 
     // Payment types
     const TYPE_DEPOSIT = 'deposit';
+
     const TYPE_AUTO_DEBIT = 'auto_debit';
+
     const TYPE_BONUS = 'bonus';
+
     const TYPE_AD_SPEND = 'ad_spend';
+
     const TYPE_REFUND = 'refund';
 
     // Payment statuses
     const STATUS_PENDING = 'pending';
+
     const STATUS_PROCESSING = 'processing';
+
     const STATUS_COMPLETED = 'completed';
+
     const STATUS_FAILED = 'failed';
+
     const STATUS_CANCELLED = 'cancelled';
 
     public function user()
@@ -71,7 +80,7 @@ class Payment extends Model
     // Get formatted amount
     public function getFormattedAmountAttribute()
     {
-        return '$' . number_format($this->amount, 2);
+        return '$'.number_format($this->amount, 2);
     }
 
     // Get total amount including bonus

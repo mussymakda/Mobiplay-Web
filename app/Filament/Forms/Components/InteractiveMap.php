@@ -14,13 +14,13 @@ class InteractiveMap extends Field
 
         $this->afterStateHydrated(static function (InteractiveMap $component, $state): void {
             // Get the current form state to access latitude, longitude, and radius
-            $formState = $component->getContainer()->getStatePath() ? 
-                $component->getContainer()->getState() : 
+            $formState = $component->getContainer()->getStatePath() ?
+                $component->getContainer()->getState() :
                 $component->getLivewire()->data;
-                
+
             $component->state([
                 'latitude' => $formState['latitude'] ?? 40.7128,
-                'longitude' => $formState['longitude'] ?? -74.0060, 
+                'longitude' => $formState['longitude'] ?? -74.0060,
                 'radius_miles' => $formState['radius_miles'] ?? 5,
             ]);
         });

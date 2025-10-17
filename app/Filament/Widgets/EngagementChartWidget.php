@@ -2,7 +2,6 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Ad;
 use App\Models\Impression;
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
@@ -10,11 +9,11 @@ use Filament\Widgets\ChartWidget;
 class EngagementChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Ad Engagement';
-    
+
     protected static ?int $sort = 2;
-    
+
     protected static ?string $maxHeight = '300px';
-    
+
     protected static ?string $pollingInterval = null;
 
     protected function getOptions(): array
@@ -75,8 +74,8 @@ class EngagementChartWidget extends ChartWidget
                         'display' => true,
                         'text' => 'QR Scan Rate (%)',
                         'color' => '#9ca3af',
-                    ]
-                ]
+                    ],
+                ],
             ],
             'elements' => [
                 'bar' => [
@@ -98,14 +97,14 @@ class EngagementChartWidget extends ChartWidget
             'layout' => [
                 'padding' => [
                     'top' => 10,
-                    'right' => 10, 
+                    'right' => 10,
                     'bottom' => 10,
                     'left' => 10,
                 ],
             ],
         ];
     }
-    
+
     protected function getData(): array
     {
         $days = 14; // Last 14 days
@@ -113,33 +112,33 @@ class EngagementChartWidget extends ChartWidget
         $impressionsData = [];
         $qrScansData = [];
         $scanRateData = [];
-        
+
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
             $formattedDate = $date->format('Y-m-d');
             $displayDate = $date->format('M d');
-            
+
             // Get impression counts
             $impressionCount = Impression::whereDate('created_at', $formattedDate)
                 ->where('type', Impression::TYPE_DISPLAY)
                 ->count();
-                
+
             // Get QR scan counts
             $qrScanCount = Impression::whereDate('created_at', $formattedDate)
                 ->where('type', Impression::TYPE_QR_SCAN)
                 ->count();
-                
+
             // Calculate scan rate percentage
-            $scanRate = $impressionCount > 0 
-                ? round(($qrScanCount / $impressionCount) * 100, 1) 
+            $scanRate = $impressionCount > 0
+                ? round(($qrScanCount / $impressionCount) * 100, 1)
                 : 0;
-                
+
             $dates[] = $displayDate;
             $impressionsData[] = $impressionCount;
             $qrScansData[] = $qrScanCount;
             $scanRateData[] = $scanRate;
         }
-        
+
         return [
             'datasets' => [
                 [
@@ -181,7 +180,7 @@ class EngagementChartWidget extends ChartWidget
             'labels' => $dates,
         ];
     }
-    
+
     protected function getType(): string
     {
         return 'bar';

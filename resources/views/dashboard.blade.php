@@ -1,22 +1,28 @@
 @extends('layouts.app')
 
-@section('meta')
-@endsection
-
 @section('style')
+<style>
+  .total-box {
+    margin-bottom: 30px;
+  }
+</style>
 @endsection
 
 @section('content')
-<section id="content-wrapper" class="mt-3">
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <div class="row align-items-center mb-4">
-        <div class="col-xl-4 col-lg-4">
-          <div class="page-title">
-            <h1 class="mb-lg-0">{{ __('messages.control_panel') }}</h1>
-          </div>
-        </div>
-      </div>
+<section id="page-wrapper">
+    <div id="wrapper">
+        @include('layouts.sidebar')
+        @include('layouts.navbar')
+
+        <div id="content-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-xl-4 col-lg-4">
+                        <div class="page-title">
+                            <h1 class="mb-lg-0">{{ __('messages.control_panel') }}</h1>
+                        </div>
+                    </div>
+                </div>
       <div class="col-lg-12">
         <div class="create-campaign-box">
           <div class="campaign-img">
@@ -137,10 +143,21 @@
         </div>
       </div>
 
+        </div>
+      </div>
     </div>
   </div>
-</section>
+</div>
 @endsection
 
-@section('script')
+@section('scripts')
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+</script>
 @endsection

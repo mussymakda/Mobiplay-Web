@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\OfferResource\Pages;
-use App\Filament\Resources\OfferResource\RelationManagers;
 use App\Models\Offer;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,16 +10,15 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class OfferResource extends Resource
 {
     protected static ?string $model = Offer::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-gift';
-    
+
     protected static ?string $navigationGroup = 'Financial Management';
-    
+
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
@@ -50,7 +48,7 @@ class OfferResource extends Resource
                             ->placeholder('Brief description of the offer')
                             ->rows(3),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Bonus Configuration')
                     ->schema([
                         Forms\Components\TextInput::make('bonus_percentage')
@@ -81,7 +79,7 @@ class OfferResource extends Resource
                             ->placeholder('e.g., 500.00')
                             ->helperText('Cap on bonus amount (for percentage-based offers)'),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Validity & Usage')
                     ->schema([
                         Forms\Components\DateTimePicker::make('valid_from')
@@ -103,7 +101,7 @@ class OfferResource extends Resource
                             ->disabled()
                             ->helperText('Automatically tracked'),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Terms & Conditions')
                     ->schema([
                         Forms\Components\Textarea::make('conditions')
@@ -138,7 +136,7 @@ class OfferResource extends Resource
                     }),
                 Tables\Columns\TextColumn::make('bonus_percentage')
                     ->label('Bonus %')
-                    ->formatStateUsing(fn (?float $state): string => $state ? $state . '%' : '—')
+                    ->formatStateUsing(fn (?float $state): string => $state ? $state.'%' : '—')
                     ->alignEnd(),
                 Tables\Columns\TextColumn::make('bonus_fixed_amount')
                     ->label('Fixed Bonus')
@@ -162,6 +160,7 @@ class OfferResource extends Resource
                     ->formatStateUsing(function (Offer $record): string {
                         $used = $record->used_count;
                         $limit = $record->usage_limit;
+
                         return $limit ? "{$used}/{$limit}" : "{$used}/∞";
                     })
                     ->alignCenter(),
@@ -175,8 +174,7 @@ class OfferResource extends Resource
                     ->dateTime()
                     ->since()
                     ->sortable()
-                    ->color(fn (Offer $record): string => 
-                        $record->valid_until->isPast() ? 'danger' : 
+                    ->color(fn (Offer $record): string => $record->valid_until->isPast() ? 'danger' :
                         ($record->valid_until->diffInDays() <= 7 ? 'warning' : 'primary')
                     ),
                 Tables\Columns\TextColumn::make('created_at')
@@ -218,7 +216,7 @@ class OfferResource extends Resource
                         ->icon('heroicon-o-document-duplicate')
                         ->action(function (Offer $record) {
                             $newOffer = $record->replicate();
-                            $newOffer->name = $record->name . ' (Copy)';
+                            $newOffer->name = $record->name.' (Copy)';
                             $newOffer->used_count = 0;
                             $newOffer->save();
                         })
@@ -227,10 +225,10 @@ class OfferResource extends Resource
                         ->modalDescription('This will create a copy of this offer with usage count reset to 0.'),
                     Tables\Actions\DeleteAction::make(),
                 ])
-                ->icon('heroicon-m-ellipsis-vertical')
-                ->size('sm')
-                ->color('gray')
-                ->button()
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

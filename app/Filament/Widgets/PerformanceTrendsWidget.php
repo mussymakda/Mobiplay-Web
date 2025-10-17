@@ -3,20 +3,20 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Payment;
-use App\Models\Ad;
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Facades\DB;
 
 class PerformanceTrendsWidget extends ChartWidget
 {
     protected static ?string $heading = 'Performance Trends';
+
     protected static ?int $sort = 1;
+
     protected static ?string $maxHeight = '400px';
 
     // Correct type declaration for Filament 3
     protected int|string|array $columnSpan = 2;
-    
+
     protected function getType(): string
     {
         return 'line';

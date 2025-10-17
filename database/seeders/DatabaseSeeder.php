@@ -12,10 +12,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             AdminSeeder::class,
             PackageSeeder::class,
-            OfferSeeder::class
-        ]);
-    }
-}
+            OfferSeeder::class,
             // PaymentSeeder::class,        // Commented out - contains demo data
             // AdSeeder::class,             // Commented out - contains demo data
             // ImpressionSeeder::class,     // Commented out - contains demo data

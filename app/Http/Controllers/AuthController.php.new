@@ -1,0 +1,346 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EmailVerification;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
+use Log;
+
+class AuthController extends Controller
+{
+    public function showLandingRegister()
+    {
+        return view('auth.landing-register');
+    }
+
+    public function handleLandingRegister(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email',
+                'phone' => 'required|string|max:20',
+                'business_name' => 'required|string|max:255',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Store form data in session and flash old input
+            $request->flash();
+            Session::put('landing_registration', $request->all());
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Registration data saved',
+                'redirect' => route('register')
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Landing registration error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred during registration.'
+            ], 500);
+        }
+    }
+
+    public function showRegistrationForm()
+    {
+        $landingData = Session::get('landing_registration', []);
+        return view('auth.register', compact('landingData'));
+    }
+
+    public function register(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email',
+                'phone' => 'required|string|max:20',
+                'business_name' => 'required|string|max:255',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Generate OTP
+            $otp = mt_rand(100000, 999999);
+            $email = $request->email;
+
+            // Store OTP in cache with expiry and attempt counter
+            Cache::put('email_verification_' . $email, [
+                'otp' => $otp,
+                'attempts' => 0
+            ], now()->addMinutes(10));
+
+            try {
+                Mail::to($email)->send(new EmailVerification($otp));
+            } catch (\Exception $e) {
+                Log::error('Failed to send verification email: ' . $e->getMessage());
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to send verification email. Please try again.'
+                ], 500);
+            }
+
+            // Store registration data in session with expiry
+            $registrationData = $request->all();
+            $registrationData['type'] = 'Advertiser'; // Default type for advertisers
+            
+            Session::put('registration_data', $registrationData);
+            Session::put('registration_expires_at', now()->addMinutes(30));
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'OTP has been sent to your email',
+                'email' => $email
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Registration error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred during registration'
+            ], 500);
+        }
+    }
+
+    public function verifyEmail(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'otp' => 'required|string|size:6'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $email = $request->email;
+            $otp = $request->otp;
+            
+            // Get stored OTP and attempts from cache
+            $verification = Cache::get('email_verification_' . $email);
+
+            if (!$verification) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'OTP has expired'
+                ], 400);
+            }
+
+            // Check attempts
+            if ($verification['attempts'] >= 3) {
+                Cache::forget('email_verification_' . $email);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Too many invalid attempts. Please request a new OTP.'
+                ], 400);
+            }
+
+            if ($otp != $verification['otp']) {
+                // Increment attempts
+                Cache::put('email_verification_' . $email, [
+                    'otp' => $verification['otp'],
+                    'attempts' => $verification['attempts'] + 1
+                ], now()->addMinutes(10));
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Invalid OTP'
+                ], 400);
+            }
+
+            // Get registration data from session
+            $registrationData = Session::get('registration_data');
+            $registrationExpiry = Session::get('registration_expires_at');
+
+            if (!$registrationData || !$registrationExpiry || now()->isAfter($registrationExpiry)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Registration session has expired'
+                ], 400);
+            }
+
+            // Create user with full name and type
+            $user = User::create([
+                'name' => $registrationData['first_name'] . ' ' . $registrationData['last_name'],
+                'email' => $registrationData['email'],
+                'phone_number' => $registrationData['phone'],
+                'password' => Hash::make($registrationData['password']),
+                'type' => $registrationData['type'],
+                'email_verified_at' => now(),
+            ]);
+
+            // Clear cache and session
+            Cache::forget('email_verification_' . $email);
+            Session::forget(['registration_data', 'registration_expires_at']);
+
+            // Log the user in
+            Auth::login($user);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Registration completed successfully',
+                'redirect' => route('campaign.wizard')
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Email verification error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred during verification'
+            ], 500);
+        }
+    }
+
+    public function resendOtp(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Invalid email'
+                ], 422);
+            }
+
+            $email = $request->email;
+
+            // Generate new OTP
+            $otp = mt_rand(100000, 999999);
+
+            // Store OTP in cache with expiry and reset attempts
+            Cache::put('email_verification_' . $email, [
+                'otp' => $otp,
+                'attempts' => 0
+            ], now()->addMinutes(10));
+
+            try {
+                Mail::to($email)->send(new EmailVerification($otp));
+            } catch (\Exception $e) {
+                Log::error('Failed to send verification email: ' . $e->getMessage());
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to send verification email. Please try again.'
+                ], 500);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'New OTP has been sent to your email'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('OTP resend error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while resending OTP'
+            ], 500);
+        }
+    }
+
+    public function login(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|string|email',
+                'password' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $credentials = $request->only('email', 'password');
+
+            if (Auth::attempt($credentials)) {
+                $user = Auth::user();
+                
+                // Check if email is verified
+                if (!$user->email_verified_at) {
+                    Auth::logout();
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Please verify your email first'
+                    ], 401);
+                }
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Login successful',
+                    'redirect' => route('campaign.wizard')
+                ]);
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid credentials'
+            ], 401);
+
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred during login'
+            ], 500);
+        }
+    }
+
+    public function showLoginForm()
+    {
+        if (Auth::check()) {
+            return redirect()->route('campaign.wizard');
+        }
+        return view('auth.login');
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/');
+    }
+
+    public function checkEmail(Request $request)
+    {
+        $email = $request->input('email');
+        $exists = User::where('email', $email)->exists();
+        return response()->json(['exists' => $exists]);
+    }
+}

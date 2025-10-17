@@ -12,7 +12,7 @@ class DatabaseSeederTemp extends Seeder
             UserSeeder::class,
             AdminSeeder::class,
             PackageSeeder::class,
-            OfferSeeder::class
+            OfferSeeder::class,
         ]);
     }
 }

@@ -4,22 +4,20 @@ namespace App\Filament\Widgets;
 
 use App\Models\Impression;
 use Carbon\Carbon;
-use Carbon\CarbonPeriod;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Support\Facades\DB;
 
 class ImpressionsWidget extends ChartWidget
 {
     protected static ?string $heading = 'Monthly Impressions';
+
     protected static ?int $sort = 2;
+
     protected static ?string $maxHeight = '400px';
-    
+
     // Correct type declaration for Filament 3
     protected int|string|array $columnSpan = 1;
-    
+
     // Chart filters
     protected function getFilters(): ?array
     {
@@ -29,7 +27,7 @@ class ImpressionsWidget extends ChartWidget
             'year' => 'Yearly',
         ];
     }
-    
+
     protected function getType(): string
     {
         return 'bar';
@@ -39,7 +37,7 @@ class ImpressionsWidget extends ChartWidget
     protected function getOptions(): array
     {
         $data = $this->getData();
-        
+
         return [
             'chart' => [
                 'type' => 'bar',
@@ -133,49 +131,49 @@ class ImpressionsWidget extends ChartWidget
         $period = $this->filter ?? 'month';
         $labels = [];
         $values = [];
-        
+
         switch ($period) {
             case 'week':
                 // Last 7 days
                 for ($i = 6; $i >= 0; $i--) {
                     $date = Carbon::now()->subDays($i);
                     $labels[] = $date->format('D');
-                    
+
                     $count = Impression::whereDate('created_at', $date->format('Y-m-d'))
                         ->where('type', Impression::TYPE_DISPLAY)
                         ->count();
                     $values[] = $count;
                 }
                 break;
-                
+
             case 'month':
                 // Last 30 days grouped by day
                 for ($i = 29; $i >= 0; $i--) {
                     $date = Carbon::now()->subDays($i);
-                    
+
                     // Only show every 3rd label to avoid crowding
                     if ($i % 3 === 0) {
                         $labels[] = $date->format('M d');
                     } else {
-                        $labels[] = "";  // Empty label but keeps the data point
+                        $labels[] = '';  // Empty label but keeps the data point
                     }
-                    
+
                     $count = Impression::whereDate('created_at', $date->format('Y-m-d'))
                         ->where('type', Impression::TYPE_DISPLAY)
                         ->count();
                     $values[] = $count;
                 }
                 break;
-                
+
             case 'year':
                 // Last 12 months
                 for ($i = 11; $i >= 0; $i--) {
                     $date = Carbon::now()->subMonths($i);
                     $labels[] = $date->format('M');
-                    
+
                     $startOfMonth = Carbon::now()->subMonths($i)->startOfMonth();
                     $endOfMonth = Carbon::now()->subMonths($i)->endOfMonth();
-                    
+
                     $count = Impression::whereBetween('created_at', [$startOfMonth, $endOfMonth])
                         ->where('type', Impression::TYPE_DISPLAY)
                         ->count();
@@ -183,19 +181,20 @@ class ImpressionsWidget extends ChartWidget
                 }
                 break;
         }
-        
+
         return [
             'labels' => $labels,
             'values' => $values,
         ];
     }
-    
+
     public function getHeading(): string|Htmlable|null
     {
         $period = $this->filter ?? 'month';
-        return match($period) {
+
+        return match ($period) {
             'week' => 'Weekly Impressions',
-            'month' => 'Monthly Impressions', 
+            'month' => 'Monthly Impressions',
             'year' => 'Yearly Impressions',
             default => 'Monthly Impressions',
         };

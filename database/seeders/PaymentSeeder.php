@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Offer;
 use App\Models\Payment;
 use App\Models\User;
-use App\Models\Offer;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class PaymentSeeder extends Seeder
 {
@@ -17,32 +17,33 @@ class PaymentSeeder extends Seeder
     {
         $users = User::all();
         $offers = Offer::where('is_active', true)->get();
-        
+
         if ($users->isEmpty()) {
             $this->command->warn('No users found. Please run UserSeeder first.');
+
             return;
         }
 
         $payments = [];
-        
+
         // Create various types of payments
         foreach ($users->take(10) as $index => $user) {
             // First deposit with welcome bonus
             $welcomeOffer = $offers->where('type', Offer::TYPE_FIRST_DEPOSIT)->first();
             $depositAmount = fake()->randomFloat(2, 50, 500);
             $bonusAmount = $welcomeOffer ? min($depositAmount * ($welcomeOffer->bonus_percentage / 100), $welcomeOffer->maximum_bonus ?? $depositAmount) : 0;
-            
+
             $payments[] = [
                 'user_id' => $user->id,
                 'amount' => $depositAmount,
                 'type' => Payment::TYPE_DEPOSIT,
                 'status' => Payment::STATUS_COMPLETED,
-                'stripe_payment_id' => 'pi_' . fake()->regexify('[A-Za-z0-9]{24}'),
-                'stripe_customer_id' => 'cus_' . fake()->regexify('[A-Za-z0-9]{14}'),
-                'transaction_id' => 'txn_' . fake()->regexify('[A-Za-z0-9]{16}'),
+                'stripe_payment_id' => 'pi_'.fake()->regexify('[A-Za-z0-9]{24}'),
+                'stripe_customer_id' => 'cus_'.fake()->regexify('[A-Za-z0-9]{14}'),
+                'transaction_id' => 'txn_'.fake()->regexify('[A-Za-z0-9]{16}'),
                 'offer_id' => $welcomeOffer?->id,
                 'bonus_amount' => $bonusAmount,
-                'description' => 'Welcome deposit with ' . ($welcomeOffer?->name ?? 'no bonus'),
+                'description' => 'Welcome deposit with '.($welcomeOffer?->name ?? 'no bonus'),
                 'metadata' => [
                     'payment_method' => fake()->randomElement(['card', 'bank_transfer']),
                     'ip_address' => fake()->ipv4(),
@@ -61,7 +62,7 @@ class PaymentSeeder extends Seeder
                     'status' => Payment::STATUS_COMPLETED,
                     'stripe_payment_id' => null,
                     'stripe_customer_id' => null,
-                    'transaction_id' => 'bonus_' . fake()->regexify('[A-Za-z0-9]{12}'),
+                    'transaction_id' => 'bonus_'.fake()->regexify('[A-Za-z0-9]{12}'),
                     'offer_id' => $welcomeOffer?->id,
                     'bonus_amount' => 0.00,
                     'description' => 'Welcome bonus for deposit',
@@ -79,15 +80,15 @@ class PaymentSeeder extends Seeder
                 $reloadOffer = $offers->where('type', Offer::TYPE_RELOAD_BONUS)->first();
                 $reloadAmount = fake()->randomFloat(2, 100, 300);
                 $reloadBonus = $reloadOffer ? min($reloadAmount * ($reloadOffer->bonus_percentage / 100), $reloadOffer->maximum_bonus ?? $reloadAmount) : 0;
-                
+
                 $payments[] = [
                     'user_id' => $user->id,
                     'amount' => $reloadAmount,
                     'type' => Payment::TYPE_DEPOSIT,
                     'status' => Payment::STATUS_COMPLETED,
-                    'stripe_payment_id' => 'pi_' . fake()->regexify('[A-Za-z0-9]{24}'),
-                    'stripe_customer_id' => 'cus_' . fake()->regexify('[A-Za-z0-9]{14}'),
-                    'transaction_id' => 'txn_' . fake()->regexify('[A-Za-z0-9]{16}'),
+                    'stripe_payment_id' => 'pi_'.fake()->regexify('[A-Za-z0-9]{24}'),
+                    'stripe_customer_id' => 'cus_'.fake()->regexify('[A-Za-z0-9]{14}'),
+                    'transaction_id' => 'txn_'.fake()->regexify('[A-Za-z0-9]{16}'),
                     'offer_id' => $reloadOffer?->id,
                     'bonus_amount' => $reloadBonus,
                     'description' => 'Reload deposit with bonus',
@@ -109,7 +110,7 @@ class PaymentSeeder extends Seeder
                 'status' => Payment::STATUS_COMPLETED,
                 'stripe_payment_id' => null,
                 'stripe_customer_id' => null,
-                'transaction_id' => 'spend_' . fake()->regexify('[A-Za-z0-9]{12}'),
+                'transaction_id' => 'spend_'.fake()->regexify('[A-Za-z0-9]{12}'),
                 'offer_id' => null,
                 'bonus_amount' => 0.00,
                 'description' => 'Ad campaign spending',
@@ -129,8 +130,8 @@ class PaymentSeeder extends Seeder
             'amount' => 75.00,
             'type' => Payment::TYPE_DEPOSIT,
             'status' => Payment::STATUS_FAILED,
-            'stripe_payment_id' => 'pi_' . fake()->regexify('[A-Za-z0-9]{24}'),
-            'stripe_customer_id' => 'cus_' . fake()->regexify('[A-Za-z0-9]{14}'),
+            'stripe_payment_id' => 'pi_'.fake()->regexify('[A-Za-z0-9]{24}'),
+            'stripe_customer_id' => 'cus_'.fake()->regexify('[A-Za-z0-9]{14}'),
             'transaction_id' => null,
             'offer_id' => null,
             'bonus_amount' => 0.00,
@@ -148,8 +149,8 @@ class PaymentSeeder extends Seeder
             'amount' => 150.00,
             'type' => Payment::TYPE_DEPOSIT,
             'status' => Payment::STATUS_PENDING,
-            'stripe_payment_id' => 'pi_' . fake()->regexify('[A-Za-z0-9]{24}'),
-            'stripe_customer_id' => 'cus_' . fake()->regexify('[A-Za-z0-9]{14}'),
+            'stripe_payment_id' => 'pi_'.fake()->regexify('[A-Za-z0-9]{24}'),
+            'stripe_customer_id' => 'cus_'.fake()->regexify('[A-Za-z0-9]{14}'),
             'transaction_id' => null,
             'offer_id' => null,
             'bonus_amount' => 0.00,
@@ -166,6 +167,6 @@ class PaymentSeeder extends Seeder
             Payment::create($paymentData);
         }
 
-        $this->command->info('Created ' . count($payments) . ' sample payments');
+        $this->command->info('Created '.count($payments).' sample payments');
     }
 }

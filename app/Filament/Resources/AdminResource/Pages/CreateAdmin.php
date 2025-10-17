@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\AdminResource\Pages;
 
 use App\Filament\Resources\AdminResource;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Hash;
 
@@ -16,7 +15,7 @@ class CreateAdmin extends CreateRecord
         if (isset($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         }
-        
+
         return $data;
     }
 }

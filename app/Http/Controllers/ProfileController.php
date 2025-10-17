@@ -1,7 +1,7 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ProfileController extends Controller
@@ -24,7 +24,7 @@ class ProfileController extends Controller
             'postal_code' => $user->postal_code ?? '-',
             'country' => $user->country ?? '-',
             'account_type' => $user->type ?? '-',
-            'profile_image_url' => $user->profile_image ? asset('storage/' . $user->profile_image) : asset('assets/images/demo-profile.svg'),
+            'profile_image_url' => $user->profile_image ? asset('storage/'.$user->profile_image) : asset('assets/images/demo-profile.svg'),
         ]);
     }
 }

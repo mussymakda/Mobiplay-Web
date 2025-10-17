@@ -22,7 +22,7 @@ return new class extends Migration
             $table->json('metadata')->nullable(); // Additional data like stripe info
             $table->text('description')->nullable();
             $table->timestamps();
-            
+
             $table->index(['user_id', 'type']);
             $table->index(['user_id', 'created_at']);
         });

@@ -10,11 +10,13 @@ use Illuminate\Contracts\Support\Htmlable;
 class ImpressionsWidgetNew extends ChartWidget
 {
     protected static ?string $heading = 'Monthly Impressions';
+
     protected static ?int $sort = 2;
+
     protected static ?string $maxHeight = '400px';
-    
+
     protected int|string|array $columnSpan = 1;
-    
+
     protected function getFilters(): ?array
     {
         return [
@@ -23,7 +25,7 @@ class ImpressionsWidgetNew extends ChartWidget
             'year' => 'Yearly',
         ];
     }
-    
+
     protected function getType(): string
     {
         return 'line';
@@ -90,9 +92,10 @@ class ImpressionsWidgetNew extends ChartWidget
     public function getHeading(): string|Htmlable|null
     {
         $period = $this->filter ?? 'month';
-        return match($period) {
+
+        return match ($period) {
             'week' => 'Weekly Impressions',
-            'month' => 'Monthly Impressions', 
+            'month' => 'Monthly Impressions',
             'year' => 'Yearly Impressions',
             default => 'Monthly Impressions',
         };
