@@ -1,0 +1,13 @@
+# Minimal .htaccess for testing
+# Upload this to your public directory as .htaccess
+
+RewriteEngine On
+
+# Allow direct access to PHP files for debugging
+RewriteCond %{REQUEST_FILENAME} \.php$
+RewriteRule ^ - [L]
+
+# Only redirect non-existent files to Laravel
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]
