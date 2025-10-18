@@ -16,7 +16,7 @@
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/stylesheet.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/responsive.css') }}">
   </head>
-  <body class="inner-page">
+  <body class="inner-page has-sidebar">
     <div id="wrapper">
 
       <aside id="sidebar-wrapper">
@@ -41,25 +41,9 @@
         <a href="#" class="help-link"><img src="{{ asset('assets/images/help.svg') }}" alt="{{ __('messages.help_center') }}"> <span>{{ __('messages.help_center') }}</span></a>
       </aside>
 
-  <div id="navbar-wrapper">
-    <nav class="navbar navbar-inverse">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <a href="#" class="navbar-brand" id="sidebar-toggle"><i class="fa fa-bars" aria-label="{{ __('messages.toggle_navigation') }}"></i></a>
-          <div class="right-nav">
-            <a href="#" class="notification-link"><img src="{{ asset('assets/images/notification.svg') }}" alt="{{ __('messages.notification') }}"></a>
-            <div class="lang-menu">
-      <a href="{{ route('switchLang', 'en') }}" class="{{ app()->getLocale() == 'en' ? 'active' : '' }}"><img src="{{ asset('assets/images/us.svg') }}" alt="{{ __('messages.english') }}"> {{ __('messages.english') }}</a>
-      <a href="{{ route('switchLang', 'es') }}" class="{{ app()->getLocale() == 'es' ? 'active' : '' }}"><img src="{{ asset('assets/images/mexico.png') }}" alt="{{ __('messages.spanish') }}" style="height: 25px; width: 25px;" class="auto"> {{ __('messages.spanish') }}</a>
-    </div>
-            <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span> <img src="{{ Auth::user()->profile_image_url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" alt="{{ __('messages.profile') }}"></a>
-          </div>
-        </div>
-      </div>
-    </nav>
-  </div>
+  @include('layouts.navbar')
 
-  <section id="content-wrapper" class="mt-3">
+  <section id="content-wrapper">
     <div class="container">
       <div class="row justify-content-center g-0">
         <div class="col-lg-10">

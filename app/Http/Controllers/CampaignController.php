@@ -41,7 +41,11 @@ class CampaignController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('camplain-list', compact('campaigns'));
+        // Separate campaigns by status for the view
+        $publishedCampaigns = $campaigns->whereIn('status', ['active', 'completed', 'paused']);
+        $draftCampaigns = $campaigns->where('status', 'draft');
+
+        return view('camplain-list', compact('campaigns', 'publishedCampaigns', 'draftCampaigns'));
     }
 
     /**
@@ -320,6 +324,276 @@ class CampaignController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching nearby drivers: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Show the form for editing the specified campaign.
+     */
+    public function edit(Ad $campaign)
+    {
+        $user = Auth::user();
+
+        // Check if user owns this campaign
+        if ($campaign->user_id !== $user->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        // Get packages for the edit form
+        $packages = Package::active()->orderBy('priority_level')->get();
+
+        return view('campaign-edit', compact('campaign', 'packages'));
+    }
+
+    /**
+     * Update the specified campaign in storage.
+     */
+    public function update(Request $request, Ad $campaign)
+    {
+        $user = Auth::user();
+
+        // Check if user owns this campaign
+        if ($campaign->user_id !== $user->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $hasPackages = Package::active()->count() > 0;
+
+        $rules = [
+            'campaign_name' => 'required|string|max:255',
+            'ctaUrl' => 'nullable|url',
+            'media_file' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mpeg|max:51200',
+            'selected_latitude' => 'nullable|numeric',
+            'selected_longitude' => 'nullable|numeric',
+            'selected_radius' => 'nullable|numeric|min:1|max:50',
+            'daily_budget' => 'required|numeric|min:1|max:1000',
+            'scheduled_date' => 'nullable|date',
+            'save_as_draft' => 'nullable|boolean',
+        ];
+
+        if ($hasPackages) {
+            $rules['selected_package_id'] = 'required|exists:packages,id';
+        }
+
+        $request->validate($rules);
+
+        try {
+            DB::beginTransaction();
+
+            $updateData = [
+                'campaign_name' => $request->campaign_name,
+                'cta_url' => $request->ctaUrl,
+                'latitude' => $request->selected_latitude,
+                'longitude' => $request->selected_longitude,
+                'radius_miles' => $request->selected_radius ? round($request->selected_radius * 0.621371, 2) : null,
+                'budget' => $request->daily_budget ?? 1.00,
+                'scheduled_date' => $request->scheduled_date ?: now()->format('Y-m-d'),
+            ];
+
+            // Handle file upload if provided
+            if ($request->hasFile('media_file')) {
+                $file = $request->file('media_file');
+                $mediaPath = $file->store('campaign_media', 'public');
+                $mimeType = $file->getMimeType();
+                $mediaType = str_starts_with($mimeType, 'video/') ? Ad::MEDIA_TYPE_VIDEO : Ad::MEDIA_TYPE_IMAGE;
+
+                $updateData['media_path'] = $mediaPath;
+                $updateData['media_type'] = $mediaType;
+            }
+
+            // Handle package selection
+            if ($hasPackages && $request->selected_package_id) {
+                $updateData['package_id'] = $request->selected_package_id;
+            }
+
+            // Handle draft status
+            $isDraft = $request->boolean('save_as_draft');
+            $updateData['status'] = $isDraft ? Ad::STATUS_DRAFT : Ad::STATUS_ACTIVE;
+
+            $campaign->update($updateData);
+
+            DB::commit();
+
+            $message = $isDraft
+                ? 'Campaign updated and saved as draft!'
+                : 'Campaign updated successfully!';
+
+            return redirect()->route('camplain-list')->with('success', $message);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Campaign update failed:', [
+                'campaign_id' => $campaign->id,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'error' => 'Failed to update campaign: '.$e->getMessage(),
+            ])->withInput();
+        }
+    }
+
+    /**
+     * Remove the specified campaign from storage.
+     */
+    public function destroy(Ad $campaign)
+    {
+        $user = Auth::user();
+
+        // Check if user owns this campaign
+        if ($campaign->user_id !== $user->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // If campaign has spent budget, we might want to refund
+            if ($campaign->spent < $campaign->budget && $campaign->status !== Ad::STATUS_DRAFT) {
+                $refundAmount = $campaign->budget - $campaign->spent;
+                if ($refundAmount > 0) {
+                    $user->addBalance($refundAmount, 'refund', "Refund for deleted campaign: {$campaign->campaign_name}");
+                }
+            }
+
+            $campaign->delete();
+
+            DB::commit();
+
+            return redirect()->route('camplain-list')->with('success', 'Campaign deleted successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Campaign deletion failed:', [
+                'campaign_id' => $campaign->id,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'error' => 'Failed to delete campaign: '.$e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Show a specific campaign.
+     */
+    public function show(Ad $campaign)
+    {
+        $user = Auth::user();
+
+        // Check if user owns this campaign
+        if ($campaign->user_id !== $user->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        return view('campaign-show', compact('campaign'));
+    }
+
+    /**
+     * Pause a campaign.
+     */
+    public function pause(Ad $campaign)
+    {
+        $user = Auth::user();
+
+        // Check if user owns this campaign
+        if ($campaign->user_id !== $user->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $campaign->update(['status' => Ad::STATUS_PAUSED]);
+
+        return redirect()->back()->with('success', 'Campaign paused successfully!');
+    }
+
+    /**
+     * Resume a campaign.
+     */
+    public function resume(Ad $campaign)
+    {
+        $user = Auth::user();
+
+        // Check if user owns this campaign
+        if ($campaign->user_id !== $user->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $campaign->update(['status' => Ad::STATUS_ACTIVE]);
+
+        return redirect()->back()->with('success', 'Campaign resumed successfully!');
+    }
+
+    /**
+     * Save campaign as draft via AJAX.
+     */
+    public function saveDraft(Request $request)
+    {
+        $user = Auth::user();
+
+        try {
+            // Validate basic required fields for draft
+            $request->validate([
+                'campaign_name' => 'required|string|max:255',
+                'media_file' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,avi,mov,mpeg|max:51200',
+            ]);
+
+            DB::beginTransaction();
+
+            // Handle file upload if present
+            $mediaPath = null;
+            $mediaType = null;
+            if ($request->hasFile('media_file')) {
+                $file = $request->file('media_file');
+                $mediaPath = $file->store('campaign_media', 'public');
+                $mimeType = $file->getMimeType();
+                $mediaType = str_starts_with($mimeType, 'video/') ? Ad::MEDIA_TYPE_VIDEO : Ad::MEDIA_TYPE_IMAGE;
+            }
+
+            // Create draft campaign
+            $ad = Ad::create([
+                'user_id' => $user->id,
+                'package_id' => $request->selected_package_id ?: null,
+                'campaign_name' => $request->campaign_name,
+                'media_type' => $mediaType,
+                'media_path' => $mediaPath,
+                'cta_url' => $request->ctaUrl,
+                'latitude' => $request->selected_latitude,
+                'longitude' => $request->selected_longitude,
+                'radius_miles' => $request->selected_radius ? round($request->selected_radius * 0.621371, 2) : null,
+                'status' => Ad::STATUS_DRAFT,
+                'budget' => $request->daily_budget ?: 0,
+                'spent' => 0,
+                'impressions' => 0,
+                'qr_scans' => 0,
+                'scheduled_date' => $request->scheduled_date ?: now()->format('Y-m-d'),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Campaign saved as draft successfully!',
+                'draft_id' => $ad->id,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Draft save failed:', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save draft: ' . $e->getMessage(),
             ], 500);
         }
     }

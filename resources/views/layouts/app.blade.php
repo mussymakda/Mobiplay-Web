@@ -22,7 +22,7 @@
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/responsive.css') }}">
     @yield('style')
 </head>
-<body class="inner-page">
+<body class="inner-page has-sidebar">
     <div id="wrapper">
         @include('layouts.sidebar')
         @include('layouts.navbar')
@@ -73,7 +73,4 @@
         });
     </script>
 </body>
-</html>
-</body>
-
 </html>

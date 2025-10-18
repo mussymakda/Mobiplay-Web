@@ -6,75 +6,89 @@
     font-size: 13px;
   }
 }
-@media (min-width: 992px) {
-  #wrapper {
-    padding-left: 264px;
-  }
-  
-  #wrapper.toggled {
-    padding-left: 80px;
-  }
 
-  #sidebar-wrapper {
+/* Desktop sidebar layout */
+@media (min-width: 992px) {
+  /* Only apply sidebar layout to pages with the has-sidebar class */
+  body.has-sidebar #wrapper #sidebar-wrapper {
     width: 264px;
+    transition: width 0.3s ease;
   }
   
-  #wrapper.toggled #sidebar-wrapper {
+  body.has-sidebar #wrapper.toggled #sidebar-wrapper {
     width: 80px;
   }
   
-  #wrapper.toggled #navbar-wrapper {
-    position: absolute;
-    margin-right: -190px;
-}
+  body.has-sidebar #wrapper.toggled #navbar-wrapper {
+    left: 80px;
+    width: calc(100% - 100px);
+    transition: left 0.3s ease, width 0.3s ease;
+  }
   
-  #wrapper.toggled #content-wrapper {
-    position: absolute;
-    margin-right: -190px;
+  body.has-sidebar #wrapper.toggled #content-wrapper {
+    left: 80px;
+    right: 20px;
+    width: calc(100% - 140px);
+    transition: left 0.3s ease, width 0.3s ease;
   }
 
-  #navbar-wrapper {
-    position: relative;
+  body.has-sidebar #wrapper #navbar-wrapper {
+    left: 264px;
+    width: calc(100% - 284px);
+    transition: left 0.3s ease, width 0.3s ease;
   }
 
-  #wrapper.toggled {
-    padding-left: 80px;
+  body.has-sidebar #wrapper #content-wrapper {
+    left: 264px;
+    right: 20px;
+    width: calc(100% - 324px);
+    top: 100px;
+    transition: left 0.3s ease, width 0.3s ease;
   }
 
-  #content-wrapper {
-    position: relative;
-    top: 0;
-  }
-
-  #wrapper.toggled #navbar-wrapper,
-  #wrapper.toggled #content-wrapper {
-    position: relative;
-    margin-right: 80px;
-  }
-
-  #wrapper.toggled #sidebar-wrapper .sidebar-nav > li a span{
+  /* Sidebar toggle states */
+  body.has-sidebar #wrapper.toggled #sidebar-wrapper .sidebar-nav > li a span{
     display: none;
   }
-  #wrapper.toggled #sidebar-wrapper .sidebar-nav > li a{
+  body.has-sidebar #wrapper.toggled #sidebar-wrapper .sidebar-nav > li a{
     display: inline-block;
   }
-  #wrapper.toggled #sidebar-wrapper .help-link span{
+  body.has-sidebar #wrapper.toggled #sidebar-wrapper .help-link span{
     display: none;
   }
-  #wrapper.toggled .sidebar-brand{
+  body.has-sidebar #wrapper.toggled .sidebar-brand{
     width: auto;
   }
-  #wrapper.toggled .sidebar-brand a.desk-logo{
+  body.has-sidebar #wrapper.toggled .sidebar-brand a.desk-logo{
     display: none;
   }
-
-  #wrapper.toggled .sidebar-brand a.mobile-logo{
+  body.has-sidebar #wrapper.toggled .sidebar-brand a.mobile-logo{
     display: block;
   }
-  #wrapper.toggled .sidebar-brand a.mobile-logo img{
+  body.has-sidebar #wrapper.toggled .sidebar-brand a.mobile-logo img{
     width: 80px;
   }
 
+  /* Exception: Campaign wizard and standalone pages - reset all positioning */
+  #content-wrapper.campaign-wizard,
+  .campaign-wizard #content-wrapper,
+  body:not(.has-sidebar) #content-wrapper {
+    position: relative !important;
+    left: 0 !important;
+    width: 100% !important;
+    top: 0 !important;
+    transition: none !important;
+    margin: 0 !important;
+    padding: 20px !important;
+  }
+
+  body:not(.has-sidebar) #navbar-wrapper,
+  .campaign-wizard #navbar-wrapper {
+    position: relative !important;
+    left: 0 !important;
+    width: 100% !important;
+    transition: none !important;
+  }
 }
 @media screen and (max-width: 991.98px) {
 	.logo-auth-desk{
@@ -88,43 +102,39 @@
   }
 }
 @media (min-width: 768px) and (max-width: 991px) {
-  #wrapper {
+  body.has-sidebar #wrapper {
     padding-left: 60px;
   }
 
-  #sidebar-wrapper {
+  body.has-sidebar #sidebar-wrapper {
     width: 60px;
   }
   
-#wrapper.toggled #protected $routeMiddleware = [
-    // other route-specific middleware
-    'redirect_if_authenticated' => \App\Http\Middleware\RedirectIfAuthenticated::class,
-];
-wrapper {
-    position: absolute;
-    margin-right: -250px;
-}
+  body.has-sidebar #wrapper.toggled {
+    padding-left: 264px;
+  }
   
-  #wrapper.toggled #content-wrapper {
+  body.has-sidebar #wrapper.toggled #sidebar-wrapper {
+    width: 264px;
+  }
+  
+  body.has-sidebar #wrapper.toggled #content-wrapper {
     position: absolute;
     margin-right: -250px;
   }
 
-  #navbar-wrapper {
+  body.has-sidebar #navbar-wrapper {
     position: relative;
   }
 
-  #wrapper.toggled {
-    padding-left: 250px;
-  }
-
-  #content-wrapper {
+  body.has-sidebar #content-wrapper {
     position: relative;
     top: 0;
+    padding-top: 100px;
   }
 
-  #wrapper.toggled #navbar-wrapper,
-  #wrapper.toggled #content-wrapper {
+  body.has-sidebar #wrapper.toggled #navbar-wrapper,
+  body.has-sidebar #wrapper.toggled #content-wrapper {
     position: relative;
     margin-right: 250px;
   }
@@ -158,11 +168,11 @@ wrapper {
 		padding: 30px 0px 30px 50px;
 		border-bottom: 1px solid #cbcbcb;
 	}
-	#wrapper {
+	body.has-sidebar #wrapper {
     	padding-left: 0;
   	}
 
-  #sidebar-wrapper {
+  body.has-sidebar #sidebar-wrapper {
     width: 0;
     margin-right: -264px;
     left: auto;
@@ -170,41 +180,41 @@ wrapper {
     height: 100vh;
   }
 
-  #wrapper.toggled #sidebar-wrapper {
+  body.has-sidebar #wrapper.toggled #sidebar-wrapper {
     width: 250px;
     position: absolute;
     left: auto;
     right: 264px;
   }
-  #wrapper.toggled #navbar-wrapper {
+  body.has-sidebar #wrapper.toggled #navbar-wrapper {
     position: absolute;
     margin-right: -250px;
   }
 
-  #wrapper.toggled #content-wrapper {
+  body.has-sidebar #wrapper.toggled #content-wrapper {
     position: absolute;
     margin-right: -250px;
   }
 
-  #navbar-wrapper {
+  body.has-sidebar #navbar-wrapper {
     position: relative;
   }
 
-  #wrapper.toggled {
+  body.has-sidebar #wrapper.toggled {
     padding-left: 0px;
     height: 100vh;
     overflow: hidden;
   }
 
-
-  #content-wrapper {
+  body.has-sidebar #content-wrapper {
     position: relative;
     top: 0;
     padding: 0;
+    padding-top: 100px;
   }
 
-  #wrapper.toggled #navbar-wrapper,
-  #wrapper.toggled #content-wrapper {
+  body.has-sidebar #wrapper.toggled #navbar-wrapper,
+  body.has-sidebar #wrapper.toggled #content-wrapper {
     position: relative;
     margin-right: 0px;
   }

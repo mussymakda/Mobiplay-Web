@@ -15,7 +15,7 @@
     <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
     <link rel="stylesheet" type="text/css" href="assets/css/responsive.css">
   </head>
-  <body class="inner-page">
+  <body class="inner-page has-sidebar">
     <div id="wrapper">
 
       <aside id="sidebar-wrapper">
@@ -59,7 +59,7 @@
   </div>
 
   
-  <section id="content-wrapper" class="mt-3">
+  <section id="content-wrapper">
       <div class="container">
         <div class="row justify-content-center">
         <div class="col-lg-10">

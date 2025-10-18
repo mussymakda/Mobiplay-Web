@@ -13,10 +13,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     
-    <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
-    <link rel="stylesheet" type="text/css" href="assets/css/responsive.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/stylesheet.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/responsive.css') }}">
   </head>
-  <body class="inner-page">
+  <body class="inner-page has-sidebar">
     <div id="wrapper">
 
       <aside id="sidebar-wrapper">
@@ -42,33 +42,8 @@
       </aside>
     
 
-  <div id="navbar-wrapper">
-    <nav class="navbar navbar-inverse">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <a href="#" class="navbar-brand" id="sidebar-toggle"><i class="fa fa-bars"></i></a>
-          <div class="campgain-tab analytics-tab">
-            <nav>
-              <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true"><img src="assets/images/audience.svg"> <span>{{ __('messages.published') }}</span></button>
-                <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false"><img src="assets/images/edit.svg"> <span>Draft</span></button>
-                
-              </div>
-            </nav>
-          </div>
-          <div class="right-nav">
-            <a href="#" class="notification-link"><img src="assets/images/notification.svg"></a>
-            <div class="lang-menu">
-      <a href="{{ route('switchLang', 'en') }}" class="{{ app()->getLocale() == 'en' ? 'active' : '' }}"><img src="assets/images/us.svg" alt="English"> EN</a>
-      <a href="{{ route('switchLang', 'es') }}" class="{{ app()->getLocale() == 'es' ? 'active' : '' }}"><img style="height: 25px; width: 25px;" class="auto" src="assets/images/mexico.png" alt="Español"> ES</a>
-    </div>
-            <a href="#" class="profile-name"><span>{{ Auth::user()->name }}</span> <img src="{{ Auth::user()->profile_image_url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"></a>
-          </div>
-        </div>
-      </div>
-    </nav>
-  </div>
-  <section id="content-wrapper" class="mt-3">
+  @include('layouts.navbar')
+  <section id="content-wrapper">
       <div class="container">
         <div class="row justify-content-center">
         <div class="col-lg-10">
@@ -94,7 +69,7 @@
                 </div>
                 <div class="col-lg-4">
                   <div class="form-group mb-lg-0 mb-3">
-                    <a href="{{ route('campaign-wizard') }}" class="camp-btn"><img src="assets/images/plus.svg"> New Campaigns</a>
+                    <a href="{{ route('campaign-wizard') }}" class="camp-btn"><img src="{{ asset('assets/images/plus.svg') }}"> New Campaigns</a>
                   </div>
                 </div>
                 
@@ -171,13 +146,13 @@
                             </td>
                             <td>
                               <div>
-                                <a href="{{ route('campaigns.edit', $campaign) }}" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
+                                <a href="{{ route('campaigns.edit', $campaign) }}" class="me-3 d-inline-block"><img src="{{ asset('assets/images/edit.svg') }}"></a>
                                 @if($campaign->status === 'pending')
                                 <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}" class="d-inline">
                                   @csrf
                                   @method('DELETE')
                                   <button type="submit" class="btn btn-link p-0" onclick="return confirm('Are you sure you want to delete this campaign?')">
-                                    <img src="assets/images/trash.svg">
+                                    <img src="{{ asset('assets/images/trash.svg') }}">
                                   </button>
                                 </form>
                                 @endif
@@ -256,12 +231,12 @@
                             </td>
                             <td>
                               <div>
-                                <a href="{{ route('campaigns.edit', $campaign) }}" class="me-3 d-inline-block"><img src="assets/images/edit.svg"></a>
+                                <a href="{{ route('campaigns.edit', $campaign) }}" class="me-3 d-inline-block"><img src="{{ asset('assets/images/edit.svg') }}"></a>
                                 <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}" class="d-inline">
                                   @csrf
                                   @method('DELETE')
                                   <button type="submit" class="btn btn-link p-0" onclick="return confirm('Are you sure you want to delete this campaign?')">
-                                    <img src="assets/images/trash.svg">
+                                    <img src="{{ asset('assets/images/trash.svg') }}">
                                   </button>
                                 </form>
                               </div>
@@ -320,6 +295,6 @@
       cb(start, end);
       });
     </script>
-    <script type="text/javascript" src="assets/js/script.js"></script>
+    <script type="text/javascript" src="{{ asset('assets/js/script.js') }}"></script>
   </body>
 </html>
