@@ -45,6 +45,19 @@
         min-height: 500px;
         max-height: 700px;
         border-radius: 0;
+        display: block !important;
+        visibility: visible !important;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Ensure map container is visible when location step is active */
+    #step-1 #map {
+        width: 100% !important;
+        height: 70vh !important;
+        min-height: 500px !important;
+        display: block !important;
+        visibility: visible !important;
     }
     
     .col-lg-7:has(#map) {
@@ -1229,17 +1242,39 @@
             // Ensure libraries are loaded
             waitForLibraries(function() {
                 try {
-                    // Check if map container exists
+                    // Check if map container exists and has dimensions  
                     const mapContainer = document.getElementById('map');
                     if (!mapContainer) {
                         console.error('Map container not found');
                         return;
                     }
                     
+                    // Ensure container has proper dimensions
+                    if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
+                        console.warn('Map container has no dimensions, setting defaults');
+                        mapContainer.style.width = '100%';
+                        mapContainer.style.height = '70vh';
+                        mapContainer.style.minHeight = '500px';
+                        mapContainer.style.display = 'block';
+                        
+                        // Wait a bit more for the container to get proper dimensions
+                        setTimeout(() => {
+                            if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
+                                console.error('Map container still has no dimensions after styling');
+                                return;
+                            }
+                            // Retry initialization
+                            window.initializeMap();
+                        }, 300);
+                        return;
+                    }
+                    
                     console.log('Initializing edit map with center:', [initialLng, initialLat]);
+                    console.log('Map container dimensions:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
                     
                     // Set Mapbox access token
                     mapboxgl.accessToken = 'pk.eyJ1IjoibXVzdGFuc2lybWFrZGEiLCJhIjoiY20yYzNpd213MHJhNTJqcXduNjU4ZGFkdyJ9.qnsW91lfIZ1EniLcPlAEkQ';
+                    console.log('Mapbox token set, mapboxgl available:', typeof mapboxgl !== 'undefined');
                     
                     // Define fallback coordinates (New York City) if initialLat/initialLng are invalid
                     let centerCoords = [initialLng, initialLat];
@@ -1288,11 +1323,38 @@
                     
                 } catch(e) {
                     console.error('Error initializing map:', e);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Map Error',
-                        text: 'Failed to initialize map: ' + e.message
-                    });
+                    
+                    // Show user-friendly error message
+                    const mapContainer = document.getElementById('map');
+                    if (mapContainer) {
+                        mapContainer.innerHTML = `
+                            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 8px;">
+                                <div style="text-align: center; padding: 20px;">
+                                    <i class="fas fa-map-marked-alt" style="font-size: 48px; color: #6c757d; margin-bottom: 16px;"></i>
+                                    <h5 style="color: #495057; margin-bottom: 8px;">Map Loading Failed</h5>
+                                    <p style="color: #6c757d; margin-bottom: 16px;">Unable to load the map interface. Please check your internet connection and try again.</p>
+                                    <button class="btn btn-primary btn-sm" onclick="window.location.reload()">
+                                        <i class="fas fa-refresh"></i> Reload Page
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Also show SweetAlert
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Map Error',
+                            text: 'Failed to initialize map: ' + e.message,
+                            confirmButtonText: 'Reload Page',
+                            allowOutsideClick: false
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.reload();
+                            }
+                        });
+                    }
                 }
             });
         };
@@ -2504,22 +2566,50 @@
                     // Initialize and resize map when showing locations step (step 2 = index 1)
                     if (stepIndex === 1) {
                         console.log('Showing edit step 2 - initializing map');
+                        
+                        // Ensure the map container is visible first
+                        const mapContainer = document.getElementById('map');
+                        if (mapContainer) {
+                            // Force display the map container
+                            mapContainer.style.display = 'block';
+                            mapContainer.style.visibility = 'visible';
+                            mapContainer.style.height = '70vh';
+                            mapContainer.style.minHeight = '500px';
+                            console.log('Map container prepared:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
+                        }
+                        
                         if (!window.mapInitialized) {
-                            // Use global initialization with delay to ensure DOM is ready
+                            // Use longer delay to ensure DOM is fully ready and visible
                             setTimeout(function() {
+                                const mapContainer = document.getElementById('map');
+                                if (!mapContainer) {
+                                    console.error('Map container not found!');
+                                    return;
+                                }
+                                
+                                if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
+                                    console.error('Map container has no dimensions:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
+                                    // Try to fix container dimensions
+                                    mapContainer.style.width = '100%';
+                                    mapContainer.style.height = '70vh';
+                                    mapContainer.style.minHeight = '500px';
+                                }
+                                
                                 if (typeof window.initializeMap === 'function') {
+                                    console.log('Calling initializeMap...');
                                     window.initializeMap();
                                 } else {
                                     console.error('Global map function not found');
                                 }
-                            }, 500);
+                            }, 800); // Increased delay
                         } else if (typeof window.map !== 'undefined' && window.map.loaded()) {
                             setTimeout(() => {
+                                console.log('Resizing existing map...');
                                 window.map.resize();
                                 if (typeof window.drawCircle === 'function') {
                                     window.drawCircle(window.radius);
                                 }
-                            }, 100);
+                            }, 200);
                         }
                     }
                 }
