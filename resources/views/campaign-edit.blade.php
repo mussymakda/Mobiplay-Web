@@ -605,8 +605,8 @@
                     <form id="multiStepForm" method="POST" action="{{ route('campaigns.update', $campaign) }}" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
-                        {{-- Step 1: Creative --}}
-                        <div class="step" id="step-1">
+                        {{-- Step 0: Creative --}}
+                        <div class="step" id="step-0">
                             <section id="content-wrapper">
                                 <div class="container">
                                     <div class="row justify-content-center">
@@ -806,8 +806,8 @@
                             </section>
                         </div>
 
-                        {{-- Step 2: Location --}}
-                        <div class="step" id="step-2" style="display: none">
+                        {{-- Step 1: Location --}}
+                        <div class="step" id="step-1" style="display: none">
                             <section id="content-wrapper" class="p-0">
                                 <div class="container-fluid p-0">
                                     <div class="row justify-content-end g-0">
@@ -863,7 +863,7 @@
 
                         @if($campaign->status === 'draft')
                         {{-- Step 3: Priority (only for drafts) --}}
-                        <div class="step" id="step-3" style="display: none">
+                        <div class="step" id="step-2" style="display: none">
                             <div class="container">
                                 <div class="row justify-content-center">
                                     <div class="col-lg-10">
@@ -2419,8 +2419,12 @@
                 
                 // Replace placeholder content with actual QR code
                 qrPreviewContainer.innerHTML = '';
+                qrPreviewContainer.className = qrPreviewContainer.className.replace('qr-placeholder', '');
                 qrPreviewContainer.appendChild(previewQrContainer);
                 qrPreviewContainer.style.padding = '2px';
+                qrPreviewContainer.style.display = 'flex';
+                qrPreviewContainer.style.justifyContent = 'center';
+                qrPreviewContainer.style.alignItems = 'center';
                 
                 // Show the QR code container
                 qrcodeContainer.style.display = "block";

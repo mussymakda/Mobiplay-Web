@@ -110,7 +110,9 @@ Route::get('/dashboard', function () {
 
 Route::get('/campaign-wizard', [CampaignController::class, 'showCampaignWizard'])->middleware('auth')->name('campaign-wizard');
 Route::post('/campaign-wizard', [CampaignController::class, 'store'])->middleware('auth')->name('campaign.store');
-Route::post('/campaign/create', [CampaignController::class, 'create'])->middleware('auth')->name('campaign.create');
+Route::get('/campaign/create', [CampaignController::class, 'showCampaignWizard'])->middleware('auth')->name('campaign.create');
+Route::post('/campaign/create', [CampaignController::class, 'store'])->middleware('auth')->name('campaign.store.create');
+Route::post('/campaign/save-draft', [CampaignController::class, 'saveDraft'])->middleware('auth')->name('campaign.save-draft');
 
 // Signup Routes
 Route::get('/signup', [AuthController::class, 'showSignupForm'])->name('signup');
