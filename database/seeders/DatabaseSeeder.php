@@ -13,9 +13,10 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             PackageSeeder::class,
             OfferSeeder::class,
-            // PaymentSeeder::class,        // Commented out - contains demo data
-            // AdSeeder::class,             // Commented out - contains demo data
-            // ImpressionSeeder::class,     // Commented out - contains demo data
+            AdSeeder::class,             // Enable for demo campaigns
+            PaymentSeeder::class,        // Enable for demo transactions
+            TransactionSeeder::class,    // Enable for demo transactions
+            ImpressionSeeder::class,     // Enable for demo impressions
         ]);
     }
 }
