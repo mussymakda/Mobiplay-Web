@@ -586,14 +586,12 @@
                         <span>Locations</span>
                     </a>
                 </li>
-                @if($campaign->status === 'draft')
                 <li>
                     <a href="#" class="step-link" data-step="2">
                         <label><img src="{{ asset('assets/images/schedule.svg') }}" /></label>
                         <span>Priority</span>
                     </a>
                 </li>
-                @endif
             </ul>
         </div>
     </div>
@@ -2443,7 +2441,12 @@
             const steps = document.querySelectorAll(".step");
             const stepLinks = document.querySelectorAll(".step-link");
             let currentStep = 0;
-            const totalSteps = {{ $campaign->status === 'draft' ? 3 : 2 }};
+            const totalSteps = 3; // Always show all 3 steps: Creative, Location, Priority
+            
+            console.log('Campaign status: {{ $campaign->status }}');
+            console.log('Total steps:', totalSteps);
+            console.log('Steps found:', steps.length);
+            console.log('Step links found:', stepLinks.length);
 
             // Function to update button visibility based on current step
             function updateButtonVisibility() {
@@ -2549,8 +2552,14 @@
                 link.addEventListener("click", (event) => {
                     event.preventDefault();
                     const stepIndex = parseInt(link.getAttribute("data-step"), 10);
-                    if (stepIndex !== currentStep && stepIndex < totalSteps) {
-                        showStep(stepIndex);
+                    console.log('Step clicked:', stepIndex, 'Current step:', currentStep, 'Total steps:', totalSteps);
+                    
+                    // Allow access to all available steps (0: Creative, 1: Location, 2: Priority if draft)
+                    if (stepIndex !== currentStep) {
+                        // For location step (index 1), always allow access
+                        if (stepIndex === 1 || stepIndex < totalSteps) {
+                            showStep(stepIndex);
+                        }
                     }
                 });
             });
