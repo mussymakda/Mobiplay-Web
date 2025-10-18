@@ -28,3 +28,7 @@ Homestead.json
 .env.production
 .phpactor.json
 auth.json
+
+# Bootstrap cache files (should be generated on server)
+bootstrap/cache/packages.php
+bootstrap/cache/services.php
